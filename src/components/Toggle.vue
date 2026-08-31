@@ -4,7 +4,7 @@
       type="button"
       :class="[
         modelValue ? 'bg-blue' : 'bg-gray',
-        'relative inline-flex flex-shrink-0 h-4 w-8 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue',
+        'relative inline-flex flex-shrink-0 h-4 w-8 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-blue',
       ]"
       role="switch"
       aria-checked="false"

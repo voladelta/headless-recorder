@@ -8,7 +8,7 @@ let browser
 let page
 
 describe('attributes', () => {
-  beforeAll(async done => {
+  beforeAll(async () => {
     const buildDir = '../../../dist'
     const fixture = './fixtures/attributes.html'
     {
@@ -16,12 +16,11 @@ describe('attributes', () => {
       server = _s
       port = _p
     }
-    return done()
   }, 20000)
 
-  afterAll(done => {
-    server.close(() => {
-      return done()
+  afterAll(async () => {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()))
     })
   })
 
@@ -33,7 +32,7 @@ describe('attributes', () => {
   })
 
   afterEach(async () => {
-    browser.close()
+    await browser.close()
   })
 
   test('it should load the content', async () => {
@@ -42,17 +41,17 @@ describe('attributes', () => {
   })
 
   test('it should use data attributes throughout selector', async () => {
-    await page.evaluate('window.eventRecorder._dataAttribute = "data-qa"')
+    await page.evaluate('window.headlessRecorder.store.commit("setDataAttribute", "data-qa")')
     await page.click('span')
 
     const event = (await waitForAndGetEvents(page, 1))[0]
     expect(event.selector).toEqual(
-      'body > #content-root > [data-qa="article-wrapper"] > [data-qa="article-body"] > span'
+      'body > #content-root > [data-qa="article-wrapper"] > [data-qa="article-body"] > span',
     )
   })
 
   test('it should use data attributes throughout selector even when id is set', async () => {
-    await page.evaluate('window.eventRecorder._dataAttribute = "data-qa"')
+    await page.evaluate('window.headlessRecorder.store.commit("setDataAttribute", "data-qa")')
     await page.click('#link')
 
     const event = (await waitForAndGetEvents(page, 1))[0]
@@ -60,7 +59,7 @@ describe('attributes', () => {
   })
 
   test('it should use id throughout selector when data attributes is not set', async () => {
-    await page.evaluate('window.eventRecorder._dataAttribute = null')
+    await page.evaluate('window.headlessRecorder.store.commit("setDataAttribute", null)')
     await page.click('#link')
 
     const event = (await waitForAndGetEvents(page, 1))[0]

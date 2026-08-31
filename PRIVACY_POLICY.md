@@ -1,4 +1,5 @@
 # Privacy policy
+
 > Last Updated: July 12, 2021
 
 The Headless Recorder browser extension (hereinafter “Service”) provided by the company Checkly Inc. provides this Privacy Policy to inform users of our policies and procedures regarding the collection, use and disclosure of information received from users of this extension, located at https://github.com/checkly/headless-recorder (“Extension”), as well as https://chrome.google.com/webstore/detail/headless-recorder/djeegiggegleadkkbgopoonhjimgehda?hl=de, and other services provided by us (collectively, together with the Extension, our “Service”).
@@ -6,8 +7,9 @@ The Headless Recorder browser extension (hereinafter “Service”) provided by 
 By using our Service you are consenting to our Processing of your information as set forth in this Privacy Policy now and as amended by us. “Processing” means using cookies on a computer or using or accessing such information in any way, including, but not limited to, collecting, storing, deleting, using, combining and disclosing information, all of which activities may take place in the United States.
 
 ### TL;DR:
-  - We will not sell your data to anyone.
-  - We use Google Analytics to see how you interact with extension. You can opt out of both Google Analytics.
+
+- We will not sell your data to anyone.
+- We use Google Analytics to see how you interact with extension. You can opt out of both Google Analytics.
 
 ## 1. Information Collection and Use
 
@@ -24,8 +26,9 @@ Like many websites, we also use “cookie” technology to collect additional us
 We may also automatically record certain information from your device by using various types of technology, including “clear gifs” or “web beacons.” This automatically collected information may include your IP address or other device address or ID, web browser and/or device type, the web pages or sites that you visit just before or just after you use the Service, the pages or other content you view or otherwise interact with on the Service, and the dates and times that you visit, access, or use the Service.
 
 ### Google Analytics
+
 We use Google Analytics to measure the effectiveness of our Extension.
 
 ## 4. Security
-Checkly is very concerned about safeguarding the confidentiality of your personally identifiable information. Please be aware that no security measures are perfect or impenetrable. We cannot and do not guarantee that information about you will not be accessed, viewed, disclosed, altered, or destroyed by breach of any of our administrative, physical, and electronic safeguards. We will make any legally-required disclosures of any breach of the security, confidentiality, or integrity of your unencrypted electronically stored personal data to you via email or conspicuous posting on this Extension in the most expedient time possible and without unreasonable delay, consistent with (i) the legitimate needs of law enforcement or (ii) any measures necessary to determine the scope of the breach and restore the reasonable integrity of the data system.
 
+Checkly is very concerned about safeguarding the confidentiality of your personally identifiable information. Please be aware that no security measures are perfect or impenetrable. We cannot and do not guarantee that information about you will not be accessed, viewed, disclosed, altered, or destroyed by breach of any of our administrative, physical, and electronic safeguards. We will make any legally-required disclosures of any breach of the security, confidentiality, or integrity of your unencrypted electronically stored personal data to you via email or conspicuous posting on this Extension in the most expedient time possible and without unreasonable delay, consistent with (i) the legitimate needs of law enforcement or (ii) any measures necessary to determine the scope of the breach and restore the reasonable integrity of the data system.

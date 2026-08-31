@@ -20,7 +20,9 @@ export default class Recorder {
 
     if (!window.pptRecorderAddedControlListeners) {
       this._addAllListeners(events)
-      cb && cb()
+      if (cb) {
+        cb()
+      }
       window.pptRecorderAddedControlListeners = true
     }
 
@@ -40,7 +42,7 @@ export default class Recorder {
 
   _addAllListeners(events) {
     const boundedRecordEvent = this._recordEvent.bind(this)
-    events.forEach(type => window.addEventListener(type, boundedRecordEvent, true))
+    events.forEach((type) => window.addEventListener(type, boundedRecordEvent, true))
   }
 
   _sendMessage(msg) {
@@ -50,9 +52,11 @@ export default class Recorder {
     }
 
     try {
-      chrome.runtime && chrome?.runtime?.onMessage
-        ? chrome.runtime.sendMessage(msg)
-        : this._eventLog.push(msg)
+      if (chrome.runtime?.onMessage) {
+        chrome.runtime.sendMessage(msg)
+      } else {
+        this._eventLog.push(msg)
+      }
     } catch (err) {
       console.debug('caught error', err)
     }

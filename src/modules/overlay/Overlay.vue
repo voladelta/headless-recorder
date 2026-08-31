@@ -13,7 +13,7 @@
         <p>You can copy the code to clipboard right away!</p>
       </div>
       <div class="hr-success-bar">
-        <button @click="copy" class="hr-btn-large" style="width: 151px;">
+        <button @click="copy" class="hr-btn-large" style="width: 151px">
           <img
             v-show="!isCopying"
             width="16"
@@ -28,9 +28,7 @@
           <img width="16" height="16" :src="getIcon('sync')" alt="restart recording" />
           Restart Recording
         </button>
-        <button @click="close" class="btn-close">
-          &times;
-        </button>
+        <button @click="close" class="btn-close">&times;</button>
       </div>
     </template>
     <template v-else>
@@ -38,9 +36,7 @@
         <span class="hr-red-dot"></span>
         REC
       </div>
-      <span class="hr-shortcut">
-        alt + k to hide
-      </span>
+      <span class="hr-shortcut"> alt + k to hide </span>
       <button
         class="hr-btn"
         title="stop"
@@ -132,7 +128,11 @@ export default {
     },
 
     pause() {
-      this.isPaused ? this.$store.commit('unpause') : this.$store.commit('pause')
+      if (this.isPaused) {
+        this.$store.commit('unpause')
+      } else {
+        this.$store.commit('pause')
+      }
     },
 
     fullScreenshot() {

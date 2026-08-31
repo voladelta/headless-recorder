@@ -5,6 +5,7 @@ HI! Thanks you for your interest in Puppeteer Recorder! We'd love to accept your
 ## New feature guidelines
 
 When authoring new features or extending existing ones, consider the following:
+
 - All new features should be accompanied first with a Github issues describing the feature and its necessity.
 - We aim for simplicity. Too many options, buttons, panels etc. detract from that.
 - Features should serve the general public. Very specific things for your use case are frowned upon.
@@ -18,10 +19,10 @@ git clone https://github.com/checkly/headless-recorder
 cd headless-recorder
 ```
 
-2. Install dependencies
+2. Install [Bun](https://bun.com/) 1.4 or later, then install dependencies.
 
 ```bash
-npm install
+bun install
 ```
 
 ## Code reviews
@@ -33,16 +34,19 @@ information on using pull requests.
 
 > Note: one pull request should cover one, atomic feature and/or bug fix. Do not submit pull requests with a plethora of updates, tweaks, fixes and new features.
 
-## Code Style
+## Code style
 
-- Coding style is fully defined in [.eslintrc](https://github.com/checkly/headless-recorder/blob/main/.eslintrc.js)
+- Oxfmt defines the code format in `.oxfmtrc.json`.
+- Oxlint defines the lint rules in `.oxlintrc.json`.
 - Comments should be generally avoided. If the code would not be understood without comments, consider re-writing the code to make it self-explanatory.
 
-To run code linter, use:
+Format and lint the project with:
 
 ```bash
-npm run lint
+bun run format
+bun run lint
 ```
+
 ## Commit Messages
 
 Commit messages should follow the Semantic Commit Messages format:
@@ -55,16 +59,16 @@ description
 footer
 ```
 
-1. *label* is one of the following:
-    - `fix` - puppeteer bug fixes.
-    - `feat` - puppeteer features.
-    - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
-    - `test` - changes to puppeteer tests infrastructure.
-    - `style` - puppeteer code style: spaces/alignment/wrapping etc.
-    - `chore` - build-related work, e.g. doclint changes / travis / appveyor.
-2. *namespace* is put in parenthesis after label and is optional.
-3. *title* is a brief summary of changes.
-4. *description* is **optional**, new-line separated from title and is in present tense.
+1. _label_ is one of the following:
+   - `fix` - puppeteer bug fixes.
+   - `feat` - puppeteer features.
+   - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
+   - `test` - changes to puppeteer tests infrastructure.
+   - `style` - puppeteer code style: spaces/alignment/wrapping etc.
+   - `chore` - build-related work, e.g. doclint changes / travis / appveyor.
+2. _namespace_ is put in parenthesis after label and is optional.
+3. _title_ is a brief summary of changes.
+4. _description_ is **optional**, new-line separated from title and is in present tense.
 
 Example:
 
@@ -79,22 +83,30 @@ Fixes #123, Fixes #234
 ## Adding New Dependencies
 
 For all dependencies (both installation and development):
+
 - **Do not add** a dependency if the desired functionality is easily implementable.
 - If adding a dependency, it should be well-maintained and trustworthy.
 
 A barrier for introducing new installation dependencies is especially high:
+
 - **Do not add** installation dependency unless it's critical to project success.
 
 ## Writing Tests
 
 - Every feature should be accompanied by a test.
 - Every public api event/method should be accompanied by a test.
-- Tests should be *hermetic*. Tests should not depend on external services.
+- Tests should be _hermetic_. Tests should not depend on external services.
 
-We use Jest for testing. Tests are located in the various `__test__` folders.
+We use Vitest for testing. Tests are in the `__tests__` folders.
 
 - To run all tests:
 
 ```bash
-npm run test
+bun run test
+```
+
+Run the full local check before you open a pull request:
+
+```bash
+bun run check
 ```

@@ -1,5 +1,5 @@
 import PuppeteerCodeGenerator from '../puppeteer'
-import { headlessActions } from '@/services/constants'
+import { headlessActions } from '@/modules/code-generator/constants'
 
 describe('PuppeteerCodeGenerator', () => {
   test('it should generate nothing when there are no events', () => {
@@ -19,7 +19,7 @@ describe('PuppeteerCodeGenerator', () => {
     ]
     const codeGenerator = new PuppeteerCodeGenerator()
     expect(codeGenerator._parseEvents(events)).toContain(
-      "await page.select('select#animals', 'hamster')"
+      "await page.select('select#animals', 'hamster')",
     )
   })
 
@@ -39,7 +39,7 @@ describe('PuppeteerCodeGenerator', () => {
       waitForNavigation: false,
     })
     expect(codeGenerator._parseEvents(events)).not.toContain(
-      'const navigationPromise = page.waitForNavigation()\n'
+      'const navigationPromise = page.waitForNavigation()\n',
     )
     expect(codeGenerator._parseEvents(events)).not.toContain('await navigationPromise\n')
   })
@@ -105,7 +105,7 @@ describe('PuppeteerCodeGenerator', () => {
     const result = codeGenerator._parseEvents(events)
     expect(result).toContain('let frames = await page.frames()')
     expect(result).toContain(
-      "const frame_123 = frames.find(f => f.url() === 'https://some.iframe.com'"
+      "const frame_123 = frames.find(f => f.url() === 'https://some.iframe.com'",
     )
   })
 
@@ -114,22 +114,21 @@ describe('PuppeteerCodeGenerator', () => {
     const codeGenerator = new PuppeteerCodeGenerator()
     const result = codeGenerator._parseEvents(events)
 
-    expect(result).toContain("await page.screenshot({ path: 'screenshot_1.png' })")
+    expect(result).toContain("await page.screenshot({ path: 'screenshot_1.png', fullPage: true })")
   })
 
   test('it generates the correct clipped page screenshot code', () => {
     const events = [
       {
         action: headlessActions.SCREENSHOT,
-        value: { x: '10px', y: '300px', width: '800px', height: '600px' },
+        value: '#capture-target',
       },
     ]
     const codeGenerator = new PuppeteerCodeGenerator()
     const result = codeGenerator._parseEvents(events)
 
-    expect(result).toContain(
-      "await page.screenshot({ path: 'screenshot_1.png', clip: { x: 10, y: 300, width: 800, height: 600 } })"
-    )
+    expect(result).toContain("const element1 = await page.$('#capture-target')")
+    expect(result).toContain("await element1.screenshot({ path: 'screenshot_1.png' })")
   })
 
   test('it generates the correct escaped value', () => {

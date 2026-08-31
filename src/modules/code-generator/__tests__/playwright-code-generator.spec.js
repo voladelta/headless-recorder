@@ -18,7 +18,7 @@ describe('PlaywrightCodeGenerator', () => {
     ]
     const codeGenerator = new PlaywrightCodeGenerator()
     expect(codeGenerator._parseEvents(events)).toContain(
-      `await page.selectOption('${events[0].selector}', '${events[0].value}')`
+      `await page.selectOption('${events[0].selector}', '${events[0].value}')`,
     )
   })
 })

@@ -3,7 +3,7 @@ import analytics from '../analytics'
 Object.defineProperty(window, '_gaq', {
   writable: true,
   value: {
-    push: jest.fn(),
+    push: vi.fn(),
   },
 })
 

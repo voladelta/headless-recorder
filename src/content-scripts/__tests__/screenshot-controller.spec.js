@@ -1,42 +1,32 @@
-import UIController from '../shooter'
+import Shooter from '@/modules/shooter'
 
-// this test NEEDS to come first because of shitty JSDOM.
-// See https://github.com/facebook/jest/issues/1224
-it('Registers mouse events', () => {
-  jest.useFakeTimers()
+const store = { state: { dataAttribute: '' } }
 
+it('registers mouse events', () => {
+  vi.useFakeTimers()
   document.body.innerHTML =
-    '<div>' + '  <div id="username">UserName</div>' + '  <button id="button"></button>' + '</div>'
+    '<div><div id="username">UserName</div><button id="button"></button></div>'
 
-  const uic = new UIController()
-  uic.showSelector()
+  const shooter = new Shooter({ store })
+  const handleClick = vi.fn()
 
-  const handleClick = jest.fn()
-  uic.on('click', handleClick)
+  shooter.on('click', handleClick)
+  shooter.startScreenshotMode()
+  document.querySelector('#username').click()
+  vi.runAllTimers()
 
-  const el = document.querySelector('#username')
-  el.click()
-
-  jest.runAllTimers()
-
-  expect(setTimeout).toHaveBeenCalledTimes(1)
-  expect(handleClick).toHaveBeenCalled()
+  expect(handleClick).toHaveBeenCalledOnce()
+  vi.useRealTimers()
 })
 
-it('Shows and hides the selector', () => {
-  const uic = new UIController()
+it('shows and hides the screenshot overlay', () => {
+  const shooter = new Shooter({ store, isClipped: true })
 
-  uic.showSelector()
-  let overlay = document.querySelector('.headlessRecorderOverlay')
-  let outline = document.querySelector('.headlessRecorderOutline')
+  shooter.startScreenshotMode()
+  expect(document.querySelector('#headless-recorder-shooter')).not.toBeNull()
+  expect(document.querySelector('#headless-recorder-shooter-outline')).not.toBeNull()
 
-  expect(overlay).toBeDefined()
-  expect(outline).toBeDefined()
-
-  uic.hideSelector()
-  overlay = document.querySelector('.headlessRecorderOverlay')
-  outline = document.querySelector('.headlessRecorderOutline')
-
-  expect(overlay).toBeNull()
-  expect(outline).toBeNull()
+  shooter.stopScreenshotMode()
+  expect(document.querySelector('#headless-recorder-shooter')).toBeNull()
+  expect(document.querySelector('#headless-recorder-shooter-outline')).toBeNull()
 })

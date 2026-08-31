@@ -1,11 +1,13 @@
-import path from 'path'
-import { scripts } from '../../package.json'
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
+import { exec as execCallback } from 'node:child_process'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { promisify } from 'node:util'
 
+const exec = promisify(execCallback)
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const extensionPath = path.join(__dirname, '../../dist')
 
-export const launchPuppeteerWithExtension = function(puppeteer) {
+export const launchPuppeteerWithExtension = async function (puppeteer) {
   const options = {
     headless: false,
     ignoreHTTPSErrors: true,
@@ -18,13 +20,15 @@ export const launchPuppeteerWithExtension = function(puppeteer) {
     ],
   }
 
-  if (process.env.CI) {
-    options.executablePath = process.env.PUPPETEER_EXEC_PATH // Set by docker on github actions
+  if (process.env.PUPPETEER_EXEC_PATH) {
+    options.executablePath = process.env.PUPPETEER_EXEC_PATH
+  } else {
+    options.executablePath = await puppeteer.executablePath()
   }
 
   return puppeteer.launch(options)
 }
 
-export const runBuild = function() {
-  return exec(scripts.build)
+export const runBuild = function () {
+  return exec('bun run build')
 }

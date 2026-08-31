@@ -1,4 +1,5 @@
-const CONTENT_SCRIPT_PATH = 'js/content-script.js'
+const CONTENT_SCRIPT_PATH = 'src/content-scripts/index.js'
+const CONTENT_SCRIPT_STYLES_PATH = 'src/content-scripts/index.css'
 const RUN_URL = 'https://app.checklyhq.com/checks/new/browser'
 const DOCS_URL = 'https://www.checklyhq.com/docs/headless-recorder'
 const SIGNUP_URL =
@@ -6,27 +7,31 @@ const SIGNUP_URL =
 
 export default {
   getActiveTab() {
-    return new Promise(function(resolve) {
-      chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => resolve(tab))
-    })
+    return chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => tab)
   },
 
   async sendTabMessage({ action, value, clean } = {}) {
     const tab = await this.getActiveTab()
-    chrome.tabs.sendMessage(tab.id, { action, value, clean })
+    return chrome.tabs.sendMessage(tab.id, { action, value, clean })
   },
 
-  injectContentScript() {
-    return new Promise(function(resolve) {
-      chrome.tabs.executeScript({ file: CONTENT_SCRIPT_PATH, allFrames: false }, res =>
-        resolve(res)
-      )
+  async injectContentScript() {
+    const tab = await this.getActiveTab()
+    const target = { tabId: tab.id }
+
+    await chrome.scripting.insertCSS({
+      target,
+      files: [CONTENT_SCRIPT_STYLES_PATH],
+    })
+
+    return chrome.scripting.executeScript({
+      target,
+      files: [CONTENT_SCRIPT_PATH],
     })
   },
 
   copyToClipboard(text) {
-    return navigator.permissions.query({ name: 'clipboard-write' })
-      .then(result => {
+    return navigator.permissions.query({ name: 'clipboard-write' }).then((result) => {
       if (result.state !== 'granted' && result.state !== 'prompt') {
         return Promise.reject()
       }
@@ -35,16 +40,13 @@ export default {
     })
   },
 
-  getChecklyCookie() {
-    return new Promise(function(resolve) {
-      chrome.cookies.getAll({}, res =>
-        resolve(res.find(cookie => cookie.name.startsWith('checkly_has_account')))
-      )
-    })
+  async getChecklyCookie() {
+    const cookies = await chrome.cookies.getAll({})
+    return cookies.find((cookie) => cookie.name.startsWith('checkly_has_account'))
   },
 
   getBackgroundBus() {
-    return chrome.extension.connect({ name: 'recordControls' })
+    return chrome.runtime.connect({ name: 'recordControls' })
   },
 
   openOptionsPage() {

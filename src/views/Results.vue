@@ -34,10 +34,33 @@
   </div>
 </template>
 <script>
+import hljs from 'highlight.js/lib/core'
+import javascript from 'highlight.js/lib/languages/javascript'
+
 import { headlessTypes } from '@/modules/code-generator/constants'
+
+hljs.registerLanguage('javascript', javascript)
+
+function highlight(element, code) {
+  const codeElement = element.querySelector('code')
+  codeElement.textContent = code
+  codeElement.removeAttribute('data-highlighted')
+  hljs.highlightElement(codeElement)
+}
 
 export default {
   name: 'ResultsTab',
+
+  directives: {
+    highlightjs: {
+      mounted(element, { value }) {
+        highlight(element, value)
+      },
+      updated(element, { value }) {
+        highlight(element, value)
+      },
+    },
+  },
 
   props: {
     puppeteer: {

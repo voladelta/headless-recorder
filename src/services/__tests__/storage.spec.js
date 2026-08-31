@@ -9,28 +9,28 @@ beforeEach(() => {
   window.chrome = {
     storage: {
       local: {
-        get: jest.fn((keys, cb) => {
+        get: vi.fn((keys, cb) => {
           if (typeof keys === 'string') {
             return cb(store[keys])
           }
-  
+
           const results = []
           if (Array.isArray(keys)) {
-            keys.forEach(key => {
+            keys.forEach((key) => {
               results.push(store[key])
             })
-    
+
             return cb(results)
           }
         }),
-        remove: jest.fn((keys, cb) => {
-            delete store[keys];
-            return cb(store)
+        remove: vi.fn((keys, cb) => {
+          delete store[keys]
+          return cb(store)
         }),
-        set: jest.fn((props, cb) => {
+        set: vi.fn((props, cb) => {
           const newStore = { ...store, ...props }
           return cb(newStore)
-      }),
+        }),
       },
     },
   }
@@ -62,9 +62,9 @@ describe('get', () => {
   it('does not have browser storage available', async () => {
     try {
       window.chrome.storage = null
-      await storage.get('token');
+      await storage.get('token')
     } catch (e) {
-      expect(e).toEqual('Browser storage not available');
+      expect(e).toEqual('Browser storage not available')
     }
   })
 })
@@ -79,16 +79,16 @@ describe('remove', () => {
   it('does not have browser storage available', async () => {
     try {
       window.chrome.storage = null
-      await storage.remove('token');
+      await storage.remove('token')
     } catch (e) {
-      expect(e).toEqual('Browser storage not available');
+      expect(e).toEqual('Browser storage not available')
     }
   })
 })
 
 describe('set', () => {
   it('set a new value or values', async () => {
-    const newStore = await storage.set({age: 1, country: 2})
+    const newStore = await storage.set({ age: 1, country: 2 })
     expect(newStore.age).toBe(1)
     expect(newStore.country).toBe(2)
     expect(window.chrome.storage.local.set.mock.calls.length).toBe(1)
@@ -97,9 +97,9 @@ describe('set', () => {
   it('does not have browser storage available', async () => {
     try {
       window.chrome.storage = null
-      await storage.set({age: 1, country: 2});
+      await storage.set({ age: 1, country: 2 })
     } catch (e) {
-      expect(e).toEqual('Browser storage not available');
+      expect(e).toEqual('Browser storage not available')
     }
   })
 })

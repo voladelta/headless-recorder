@@ -10,164 +10,198 @@ import CodeGenerator from '@/modules/code-generator'
 class Background {
   constructor() {
     this._recording = []
-    this._boundedMessageHandler = null
-    this._boundedNavigationHandler = null
-    this._boundedWaitHandler = null
-
-    this.overlayHandler = null
-
     this._badgeState = ''
+    this._isRecording = false
     this._isPaused = false
-
-    this._menuId = 'PUPPETEER_RECORDER_CONTEXT_MENU'
-    this._boundedMenuHandler = null
-
-    // Some events are sent double on page navigations to simplify the event recorder.
-    // We keep some simple state to disregard events if needed.
     this._hasGoto = false
     this._hasViewPort = false
+    this._queue = Promise.resolve()
   }
 
   init() {
-    chrome.extension.onConnect.addListener(port => {
-      port.onMessage.addListener(msg => this.handlePopupMessage(msg))
+    chrome.runtime.onConnect.addListener((port) => {
+      port.onMessage.addListener((msg) => {
+        this.enqueue(() => this.handlePopupMessage(msg))
+      })
+    })
+
+    chrome.runtime.onMessage.addListener((msg, sender) => {
+      this.enqueue(() => this.handleMessage(msg, sender))
+    })
+
+    chrome.webNavigation.onCompleted.addListener((details) => {
+      this.enqueue(() => this.handleNavigation(details))
+    })
+
+    chrome.webNavigation.onBeforeNavigate.addListener(() => {
+      this.enqueue(() => this.handleBeforeNavigate())
+    })
+  }
+
+  enqueue(task) {
+    this._queue = this._queue
+      .then(() => this.restoreState())
+      .then(task)
+      .catch((error) => console.error(error))
+
+    return this._queue
+  }
+
+  async restoreState() {
+    const {
+      recording = [],
+      controls = {},
+      recorderState = {},
+    } = await storage.get(['recording', 'controls', 'recorderState'])
+
+    this._recording = recording
+    this._isRecording = Boolean(controls.isRecording)
+    this._isPaused = Boolean(controls.isPaused)
+    this._badgeState = recorderState.badgeState || ''
+    this._hasGoto = Boolean(recorderState.hasGoto)
+    this._hasViewPort = Boolean(recorderState.hasViewPort)
+  }
+
+  persistState() {
+    return storage.set({
+      recording: this._recording,
+      controls: {
+        isRecording: this._isRecording,
+        isPaused: this._isPaused,
+      },
+      recorderState: {
+        badgeState: this._badgeState,
+        hasGoto: this._hasGoto,
+        hasViewPort: this._hasViewPort,
+      },
     })
   }
 
   async start() {
     await this.cleanUp()
 
+    this._isRecording = true
     this._badgeState = ''
     this._hasGoto = false
     this._hasViewPort = false
+    await this.persistState()
 
     await browser.injectContentScript()
-    this.toggleOverlay({ open: true, clear: true })
-
-    this._boundedMessageHandler = this.handleMessage.bind(this)
-    this._boundedNavigationHandler = this.handleNavigation.bind(this)
-    this._boundedWaitHandler = () => badge.wait()
-
-    this.overlayHandler = this.handleOverlayMessage.bind(this)
-
-    // chrome.contextMenus.create({
-    //   id: this._menuId,
-    //   title: 'Headless Recorder',
-    //   contexts: ['all'],
-    // })
-
-    // chrome.contextMenus.create({
-    //   id: this._menuId + 'SELECTOR',
-    //   title: 'Copy Selector',
-    //   parentId: this._menuId,
-    //   contexts: ['all'],
-    // })
-
-    // this._boundedMenuHandler = this.handleMenuInteraction.bind(this)
-    // chrome.contextMenus.onClicked.addListener(this._boundedMenuHandler)
-
-    chrome.runtime.onMessage.addListener(this._boundedMessageHandler)
-    chrome.runtime.onMessage.addListener(this.overlayHandler)
-
-    chrome.webNavigation.onCompleted.addListener(this._boundedNavigationHandler)
-    chrome.webNavigation.onBeforeNavigate.addListener(this._boundedWaitHandler)
+    await this.toggleOverlay({ open: true, clear: true })
 
     badge.start()
   }
 
-  stop() {
+  async stop() {
     this._badgeState = this._recording.length > 0 ? '1' : ''
-
-    chrome.runtime.onMessage.removeListener(this._boundedMessageHandler)
-    chrome.webNavigation.onCompleted.removeListener(this._boundedNavigationHandler)
-    chrome.webNavigation.onBeforeNavigate.removeListener(this._boundedWaitHandler)
-    // chrome.contextMenus.onClicked.removeListener(this._boundedMenuHandler)
+    this._isRecording = false
 
     badge.stop(this._badgeState)
-
-    storage.set({ recording: this._recording })
+    await this.persistState()
   }
 
-  pause() {
+  async pause() {
     badge.pause()
     this._isPaused = true
+    await this.persistState()
   }
 
-  unPause() {
+  async unPause() {
     badge.start()
     this._isPaused = false
+    await this.persistState()
   }
 
-  cleanUp() {
+  async cleanUp() {
     this._recording = []
+    this._isRecording = false
     this._isPaused = false
+    this._badgeState = ''
+    this._hasGoto = false
+    this._hasViewPort = false
     badge.reset()
-
-    return new Promise(function(resolve) {
-      chrome.storage.local.remove('recording', () => resolve())
-    })
+    await this.persistState()
   }
 
-  recordCurrentUrl(href) {
+  async recordEvent(msg, sender) {
+    if (!this._isRecording || this._isPaused) {
+      return
+    }
+
+    msg.frameId = sender?.frameId ?? null
+    msg.frameUrl = sender?.url ?? null
+    this._recording.push(msg)
+    await this.persistState()
+  }
+
+  async recordCurrentUrl(href, sender) {
     if (!this._hasGoto) {
-      this.handleMessage({
+      this._hasGoto = true
+      await this.recordEvent(
+        {
+          selector: undefined,
+          value: undefined,
+          action: headlessActions.GOTO,
+          href,
+        },
+        sender,
+      )
+    }
+  }
+
+  async recordCurrentViewportSize(value, sender) {
+    if (!this._hasViewPort) {
+      this._hasViewPort = true
+      await this.recordEvent(
+        {
+          selector: undefined,
+          value,
+          action: headlessActions.VIEWPORT,
+        },
+        sender,
+      )
+    }
+  }
+
+  recordNavigation(sender) {
+    return this.recordEvent(
+      {
         selector: undefined,
         value: undefined,
-        action: headlessActions.GOTO,
-        href,
-      })
-      this._hasGoto = true
-    }
+        action: headlessActions.NAVIGATION,
+      },
+      sender,
+    )
   }
 
-  recordCurrentViewportSize(value) {
-    if (!this._hasViewPort) {
-      this.handleMessage({
+  recordScreenshot(value, sender) {
+    return this.recordEvent(
+      {
         selector: undefined,
         value,
-        action: headlessActions.VIEWPORT,
-      })
-      this._hasViewPort = true
-    }
-  }
-
-  recordNavigation() {
-    this.handleMessage({
-      selector: undefined,
-      value: undefined,
-      action: headlessActions.NAVIGATION,
-    })
-  }
-
-  recordScreenshot(value) {
-    this.handleMessage({
-      selector: undefined,
-      value,
-      action: headlessActions.SCREENSHOT,
-    })
+        action: headlessActions.SCREENSHOT,
+      },
+      sender,
+    )
   }
 
   // handleMenuInteraction(info, tab) {
   // }
 
-  handleMessage(msg, sender) {
+  async handleMessage(msg, sender) {
     if (msg.control) {
-      return this.handleRecordingMessage(msg, sender)
+      if (Object.values(recordingControls).includes(msg.control)) {
+        return this.handleRecordingMessage(msg, sender)
+      }
+
+      return this.handleOverlayMessage(msg)
     }
 
-    if (msg.type === 'SIGN_CONNECT') {
+    if (msg.type === 'SIGN_CONNECT' || !this._isRecording) {
       return
     }
 
-    // NOTE: To account for clicks etc. we need to record the frameId
-    // and url to later target the frame in playback
-    msg.frameId = sender ? sender.frameId : null
-    msg.frameUrl = sender ? sender.url : null
-
-    if (!this._isPaused) {
-      this._recording.push(msg)
-      storage.set({ recording: this._recording })
-    }
+    await this.recordEvent(msg, sender)
   }
 
   async handleOverlayMessage({ control }) {
@@ -176,17 +210,12 @@ class Background {
     }
 
     if (control === overlayActions.RESTART) {
-      chrome.storage.local.set({ restart: true })
-      chrome.storage.local.set({ clear: false })
-      chrome.runtime.onMessage.removeListener(this.overlayHandler)
-      this.stop()
-      this.cleanUp()
-      this.start()
+      await storage.set({ restart: true, clear: false })
+      await this.start()
     }
 
     if (control === overlayActions.CLOSE) {
-      this.toggleOverlay()
-      chrome.runtime.onMessage.removeListener(this.overlayHandler)
+      await this.toggleOverlay()
     }
 
     if (control === overlayActions.COPY) {
@@ -194,112 +223,128 @@ class Background {
       const generator = new CodeGenerator(options)
       const code = generator.generate(this._recording)
 
-      browser.sendTabMessage({
+      await browser.sendTabMessage({
         action: 'CODE',
         value: options?.code?.showPlaywrightFirst ? code.playwright : code.puppeteer,
       })
     }
 
     if (control === overlayActions.STOP) {
-      chrome.storage.local.set({ clear: true })
-      chrome.storage.local.set({ pause: false })
-      chrome.storage.local.set({ restart: false })
-      this.stop()
+      await storage.set({ clear: true, pause: false, restart: false })
+      await this.stop()
     }
 
     if (control === overlayActions.UNPAUSE) {
-      chrome.storage.local.set({ pause: false })
-      this.unPause()
+      await storage.set({ pause: false })
+      await this.unPause()
     }
 
     if (control === overlayActions.PAUSE) {
-      chrome.storage.local.set({ pause: true })
-      this.pause()
+      await storage.set({ pause: true })
+      await this.pause()
     }
 
     // TODO: the next 3 events do not need to be listened in background
     // content script controller, should be able to handle that directly from overlay
     if (control === overlayActions.CLIPPED_SCREENSHOT) {
-      browser.sendTabMessage({ action: overlayActions.TOGGLE_SCREENSHOT_CLIPPED_MODE })
+      await browser.sendTabMessage({ action: overlayActions.TOGGLE_SCREENSHOT_CLIPPED_MODE })
     }
 
     if (control === overlayActions.FULL_SCREENSHOT) {
-      browser.sendTabMessage({ action: overlayActions.TOGGLE_SCREENSHOT_MODE })
+      await browser.sendTabMessage({ action: overlayActions.TOGGLE_SCREENSHOT_MODE })
     }
 
     if (control === overlayActions.ABORT_SCREENSHOT) {
-      browser.sendTabMessage({ action: overlayActions.CLOSE_SCREENSHOT_MODE })
+      await browser.sendTabMessage({ action: overlayActions.CLOSE_SCREENSHOT_MODE })
     }
   }
 
-  handleRecordingMessage({ control, href, value, coordinates }) {
+  async handleRecordingMessage({ control, href, value, coordinates }, sender) {
+    if (!this._isRecording) {
+      return
+    }
+
     if (control === recordingControls.EVENT_RECORDER_STARTED) {
       badge.setText(this._badgeState)
     }
 
     if (control === recordingControls.GET_VIEWPORT_SIZE) {
-      this.recordCurrentViewportSize(coordinates)
+      await this.recordCurrentViewportSize(coordinates, sender)
     }
 
     if (control === recordingControls.GET_CURRENT_URL) {
-      this.recordCurrentUrl(href)
+      await this.recordCurrentUrl(href, sender)
     }
 
     if (control === recordingControls.GET_SCREENSHOT) {
-      this.recordScreenshot(value)
+      await this.recordScreenshot(value, sender)
     }
   }
 
-  handlePopupMessage(msg) {
+  async handlePopupMessage(msg) {
     if (!msg.action) {
       return
     }
 
     if (msg.action === popupActions.START) {
-      this.start()
+      await this.start()
     }
 
     if (msg.action === popupActions.STOP) {
-      browser.sendTabMessage({ action: popupActions.STOP })
-      this.stop()
+      await browser.sendTabMessage({ action: popupActions.STOP })
+      await this.stop()
     }
 
     if (msg.action === popupActions.CLEAN_UP) {
-      chrome.runtime.onMessage.removeListener(this.overlayHandler)
-      msg.value && this.stop()
-      this.toggleOverlay()
-      this.cleanUp()
+      if (msg.value) {
+        await this.stop()
+      }
+      await this.toggleOverlay()
+      await this.cleanUp()
     }
 
     if (msg.action === popupActions.PAUSE) {
       if (!msg.stop) {
-        browser.sendTabMessage({ action: popupActions.PAUSE })
+        await browser.sendTabMessage({ action: popupActions.PAUSE })
       }
-      this.pause()
+      await this.pause()
     }
 
     if (msg.action === popupActions.UN_PAUSE) {
       if (!msg.stop) {
-        browser.sendTabMessage({ action: popupActions.UN_PAUSE })
+        await browser.sendTabMessage({ action: popupActions.UN_PAUSE })
       }
-      this.unPause()
+      await this.unPause()
     }
   }
 
-  async handleNavigation({ frameId }) {
+  async handleNavigation({ frameId, url }) {
+    if (!this._isRecording) {
+      return
+    }
+
     await browser.injectContentScript()
-    this.toggleOverlay({ open: true, pause: this._isPaused })
+    await this.toggleOverlay({ open: true, pause: this._isPaused })
 
     if (frameId === 0) {
-      this.recordNavigation()
+      await this.recordNavigation({ frameId, url })
+    }
+  }
+
+  handleBeforeNavigate() {
+    if (this._isRecording) {
+      badge.wait()
     }
   }
 
   // TODO: Use a better naming convention for this arguments
   toggleOverlay({ open = false, clear = false, pause = false } = {}) {
-    browser.sendTabMessage({ action: overlayActions.TOGGLE_OVERLAY, value: { open, clear, pause } })
+    return browser.sendTabMessage({
+      action: overlayActions.TOGGLE_OVERLAY,
+      value: { open, clear, pause },
+    })
   }
 }
 
-window.headlessRecorder = new Background()
-window.headlessRecorder.init()
+const background = new Background()
+background.init()

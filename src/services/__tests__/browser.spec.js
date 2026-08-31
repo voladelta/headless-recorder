@@ -7,50 +7,57 @@ const copyText = {
 }
 
 const cookies = [
-    {
-      name: 'checkly'
-    }
-  ]
-
+  {
+    name: 'checkly',
+  },
+]
 
 window.chrome = {
   tabs: {
-    create: jest.fn(),
-    query: jest.fn((options, cb) => (cb([activeTab]))),
-    executeScript: jest.fn((options, cb) => (cb(options))),
-    sendMessage: jest.fn(),
+    create: vi.fn(),
+    query: vi.fn(() => Promise.resolve([activeTab])),
+    sendMessage: vi.fn(() => Promise.resolve()),
   },
-  extension: {
-    connect: jest.fn(),
+  scripting: {
+    insertCSS: vi.fn(() => Promise.resolve()),
+    executeScript: vi.fn(() => Promise.resolve()),
   },
   runtime: {
-    openOptionsPage: jest.fn()
+    connect: vi.fn(),
+    openOptionsPage: vi.fn(),
   },
   cookies: {
-    getAll: jest.fn((options, cb) => (cb(cookies)))
-}}
+    getAll: vi.fn(() => Promise.resolve(cookies)),
+  },
+}
 
-global.navigator.permissions = {
-  query: jest
-    .fn()
-    .mockImplementationOnce(() => Promise.resolve({ state: 'granted' })),
-};
+Object.defineProperty(global.navigator, 'permissions', {
+  configurable: true,
+  value: {
+    query: vi.fn(() => Promise.resolve({ state: 'granted' })),
+  },
+})
 
-global.navigator.clipboard = {
-  writeText: jest.fn(text => (copyText.data = text))
-};
+Object.defineProperty(global.navigator, 'clipboard', {
+  configurable: true,
+  value: {
+    writeText: vi.fn((text) => (copyText.data = text)),
+  },
+})
 
 beforeEach(() => {
   window?.chrome?.tabs.create.mockClear()
-  window?.chrome?.extension.connect.mockClear()
+  window?.chrome?.runtime.connect.mockClear()
   window?.chrome?.runtime.openOptionsPage.mockClear()
   window?.chrome?.tabs.query.mockClear()
+  window?.chrome?.scripting.insertCSS.mockClear()
+  window?.chrome?.scripting.executeScript.mockClear()
 })
 
 describe('getActiveTab', () => {
   it('returns the active tab', async () => {
-    const activeTab = await browser.getActiveTab()
-    expect(activeTab).toBe(activeTab)
+    const tab = await browser.getActiveTab()
+    expect(tab).toBe(activeTab)
     expect(window.chrome.tabs.query.mock.calls.length).toBe(1)
   })
 })
@@ -65,7 +72,14 @@ describe('copyToClipboard', () => {
 describe('injectContentScript', () => {
   it('executes content script', async () => {
     await browser.injectContentScript()
-    expect(window.chrome.tabs.executeScript.mock.calls.length).toBe(1)
+    expect(window.chrome.scripting.insertCSS).toHaveBeenCalledWith({
+      target: { tabId: activeTab.id },
+      files: ['src/content-scripts/index.css'],
+    })
+    expect(window.chrome.scripting.executeScript).toHaveBeenCalledWith({
+      target: { tabId: activeTab.id },
+      files: ['src/content-scripts/index.js'],
+    })
   })
 })
 
@@ -78,20 +92,20 @@ describe('getChecklyCookie', () => {
 
 describe('openChecklyRunner', () => {
   it('is not logged in', () => {
-    browser.openChecklyRunner({code: 1, runner: 2, isLoggedIn: false})
+    browser.openChecklyRunner({ code: 1, runner: 2, isLoggedIn: false })
     expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
   })
 
   it('is logged in', () => {
-    browser.openChecklyRunner({code: 1, runner: 2, isLoggedIn: true})
+    browser.openChecklyRunner({ code: 1, runner: 2, isLoggedIn: true })
     expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
   })
 })
 
 describe('getBackgroundBus', () => {
-  it('gets backgorund bus', async () => {
+  it('gets background bus', () => {
     browser.getBackgroundBus()
-    expect(window.chrome.extension.connect.mock.calls.length).toBe(1)
+    expect(window.chrome.runtime.connect).toHaveBeenCalledWith({ name: 'recordControls' })
   })
 })
 
@@ -108,5 +122,3 @@ describe('openHelpPage', () => {
     expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
   })
 })
-
-
