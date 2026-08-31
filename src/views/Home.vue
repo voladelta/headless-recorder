@@ -1,9 +1,10 @@
 <template>
   <div class="home">
-    <h3 class="home__title">No recorded events yet</h3>
-    <p class="home__description">Record browser events by clicking record button</p>
+    <h2 class="home__title">No recorded events yet</h2>
+    <p class="home__description">Select Record to start recording browser events.</p>
     <RoundButton :small="false" @click="$emit('start')" class="home__record-button">
-      <div class="home__record-icon"></div>
+      <span class="sr-only">Start recording</span>
+      <div class="home__record-icon" aria-hidden="true"></div>
     </RoundButton>
   </div>
 </template>
@@ -28,7 +29,7 @@ export default {
 
 .home__title {
   margin-bottom: 0.75rem;
-  color: var(--color-gray-darkest);
+  color: var(--color-text-primary);
   font-size: 1.25rem;
   font-weight: 600;
   line-height: 1.75rem;
@@ -37,7 +38,7 @@ export default {
 .home__description {
   width: 11rem;
   margin-bottom: 1.25rem;
-  color: var(--color-gray-dark);
+  color: var(--color-text-muted);
   font-size: 0.75rem;
   line-height: 1rem;
   text-align: center;
@@ -53,13 +54,5 @@ export default {
   height: 5.375rem;
   border-radius: 2147483647px;
   background: var(--color-red);
-}
-
-:global(.dark .home__title) {
-  color: var(--color-gray-lightest);
-}
-
-:global(.dark .home__description) {
-  color: var(--color-gray-light);
 }
 </style>

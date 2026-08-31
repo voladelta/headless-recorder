@@ -58,6 +58,12 @@ describe('copyToClipboard', () => {
     await browser.copyToClipboard('data')
     expect(window.navigator.clipboard.writeText.mock.calls.length).toBe(1)
   })
+
+  it('reports clipboard write failures', async () => {
+    window.navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Clipboard blocked'))
+
+    await expect(browser.copyToClipboard('data')).rejects.toThrow('Clipboard blocked')
+  })
 })
 
 describe('injectContentScript', () => {

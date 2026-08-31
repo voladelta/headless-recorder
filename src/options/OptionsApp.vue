@@ -1,19 +1,44 @@
 <template>
   <main class="options">
-    <nav class="options__nav">
-      <a href="https://github.com/voladelta/headless-recorder#readme" target="_blank">Docs</a>
-      <a href="https://github.com/voladelta/headless-recorder" target="_blank">GitHub</a>
-      <a href="https://github.com/voladelta/headless-recorder/blob/main/CHANGELOG.md"
-        >Release notes</a
+    <nav class="options__nav" aria-label="Resources">
+      <a
+        href="https://github.com/voladelta/headless-recorder#readme"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Documentation<span class="sr-only"> (opens in a new tab)</span></a
+      >
+      <a
+        href="https://github.com/voladelta/headless-recorder"
+        target="_blank"
+        rel="noopener noreferrer"
+        >GitHub<span class="sr-only"> (opens in a new tab)</span></a
+      >
+      <a
+        href="https://github.com/voladelta/headless-recorder/blob/main/CHANGELOG.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Release notes<span class="sr-only"> (opens in a new tab)</span></a
       >
     </nav>
-    <div class="options__content">
+    <div class="options__content" :aria-busy="loading">
       <header class="options__header">
         <div class="options__brand">
           <h1 class="options__title">Headless Recorder</h1>
           <span class="options__version">v{{ version }}</span>
         </div>
-        <span role="alert" class="options__saving" v-show="saving">Saving...</span>
+        <div class="options__status">
+          <Transition name="status" mode="out-in">
+            <span
+              v-if="saveStatusMessage"
+              :key="saveStatus"
+              class="options__saving"
+              aria-hidden="true"
+              >{{ saveStatusMessage }}</span
+            >
+          </Transition>
+          <span class="options__error" role="alert">{{ saveError }}</span>
+          <span class="sr-only" role="status">{{ saveStatusMessage }}</span>
+        </div>
       </header>
 
       <section>
@@ -25,35 +50,29 @@
             class="options__input"
             type="text"
             v-model.trim="options.code.dataAttribute"
-            @change="save"
-            placeholder="your custom data-* attribute"
+            placeholder="data-testid"
           />
           <p>
-            Define an attribute that we'll attempt to use when selecting the elements, i.e
-            "data-custom". This is handy when React or Vue based apps generate random class names.
+            Enter a data attribute that identifies elements, such as “data-testid”. This is useful
+            when an application generates class names.
           </p>
           <p>
-            <span role="img" aria-label="siren">🚨</span>
-            <span class="options__notice"
-              >When <span class="options__term">"custom data attribute"</span>&nbsp; is set, it will
-              take precedence from over any other selector (even ID)
+            <span class="options__notice">
+              When set, this attribute takes priority over all other selectors, including ID.
             </span>
           </p>
         </div>
         <div>
-          <label>Set key code</label>
+          <h3 class="options__field-label">Capture key</h3>
           <div class="options__key-code">
             <Button @click="listenForKeyCodePress" class="options__key-code-button">
-              {{ recordingKeyCodePress ? 'Capturing...' : 'Record Key Stroke' }}
+              {{ recordingKeyCodePress ? 'Press a key…' : 'Capture key' }}
             </Button>
-            <span class="options__key-code-value">
+            <kbd class="options__key-code-value">
               {{ options.code.keyCode }}
-            </span>
+            </kbd>
           </div>
-          <p>
-            What key will be used for capturing input changes. The value here is the key code. This
-            will not handle multiple keys.
-          </p>
+          <p>Press one key. This setting does not support key combinations.</p>
         </div>
       </section>
 
@@ -67,13 +86,11 @@
 
       <section>
         <h2>Extension</h2>
-        <Toggle v-model="options.extension.darkMode">
-          Use Dark Mode {{ options.extension.darkMode }}
-        </Toggle>
-        <Toggle v-model="options.extension.telemetry"> Allow recording of usage telemetry </Toggle>
+        <Toggle v-model="options.extension.darkMode"> Use dark mode </Toggle>
+        <Toggle v-model="options.extension.telemetry"> Share anonymous usage telemetry </Toggle>
         <p>
-          We only record clicks for basic product development, no website content or input data.
-          Data is never, ever shared with 3rd parties.
+          Telemetry contains extension action names only. It does not include website content or
+          input data.
         </p>
       </section>
     </div>
@@ -106,7 +123,11 @@ export default {
     return {
       version,
       loading: true,
-      saving: false,
+      saveStatus: 'idle',
+      saveError: '',
+      saveRevision: 0,
+      saveResetTimer: null,
+      storageChangeListener: null,
       options: createDefaultOptions(),
       recordingKeyCodePress: false,
     }
@@ -115,7 +136,9 @@ export default {
   watch: {
     options: {
       handler() {
-        this.save()
+        if (!this.loading) {
+          this.save()
+        }
       },
       deep: true,
     },
@@ -128,37 +151,81 @@ export default {
     },
   },
 
+  computed: {
+    saveStatusMessage() {
+      return {
+        idle: '',
+        saving: 'Saving…',
+        saved: 'Saved',
+        error: '',
+      }[this.saveStatus]
+    },
+  },
+
   mounted() {
     this.load()
-    chrome.storage.onChanged.addListener(({ options = null }) => {
-      if (options && options.newValue.extension.darkMode !== this.options.extension.darkMode) {
-        this.options.extension.darkMode = options.newValue.extension.darkMode
+    this.storageChangeListener = ({ options = null }) => {
+      const darkMode = options?.newValue?.extension?.darkMode
+      if (typeof darkMode === 'boolean' && darkMode !== this.options.extension.darkMode) {
+        this.options.extension.darkMode = darkMode
       }
-    })
+    }
+    chrome.storage.onChanged.addListener(this.storageChangeListener)
+  },
+
+  beforeUnmount() {
+    window.clearTimeout(this.saveResetTimer)
+    chrome.storage.onChanged.removeListener?.(this.storageChangeListener)
   },
 
   methods: {
     async save() {
-      this.saving = true
-      await storage.set({ options: this.options })
+      const revision = ++this.saveRevision
+      window.clearTimeout(this.saveResetTimer)
+      this.saveStatus = 'saving'
+      this.saveError = ''
 
-      setTimeout(() => (this.saving = false), 500)
+      try {
+        await storage.set({ options: this.options })
+
+        if (revision !== this.saveRevision) {
+          return
+        }
+
+        this.saveStatus = 'saved'
+        this.saveResetTimer = window.setTimeout(() => {
+          if (revision === this.saveRevision) {
+            this.saveStatus = 'idle'
+          }
+        }, 1500)
+      } catch {
+        if (revision === this.saveRevision) {
+          this.saveStatus = 'error'
+          this.saveError = 'Unable to save. Try again.'
+        }
+      }
     },
 
     async load() {
-      const { options = {} } = await storage.get('options')
-      const defaults = createDefaultOptions()
-      this.options = {
-        code: {
-          blankLinesBetweenBlocks:
-            options.code?.blankLinesBetweenBlocks ?? defaults.code.blankLinesBetweenBlocks,
-          dataAttribute: options.code?.dataAttribute ?? defaults.code.dataAttribute,
-          keyCode: options.code?.keyCode ?? defaults.code.keyCode,
-        },
-        extension: { ...defaults.extension, ...options.extension },
+      try {
+        const { options = {} } = await storage.get('options')
+        const defaults = createDefaultOptions()
+        this.options = {
+          code: {
+            blankLinesBetweenBlocks:
+              options.code?.blankLinesBetweenBlocks ?? defaults.code.blankLinesBetweenBlocks,
+            dataAttribute: options.code?.dataAttribute ?? defaults.code.dataAttribute,
+            keyCode: options.code?.keyCode ?? defaults.code.keyCode,
+          },
+          extension: { ...defaults.extension, ...options.extension },
+        }
+      } catch {
+        this.saveStatus = 'error'
+        this.saveError = 'Unable to load settings. Reload the page and try again.'
+      } finally {
+        await this.$nextTick()
+        this.loading = false
       }
-
-      this.loading = false
     },
 
     listenForKeyCodePress() {
@@ -176,7 +243,6 @@ export default {
 
     updateKeyCodeWithNumber(evt) {
       this.options.code.keyCode = parseInt(evt.keyCode, 10)
-      this.save()
     },
   },
 }
@@ -184,25 +250,25 @@ export default {
 
 <style scoped>
 .options {
-  display: flex;
-  width: 100%;
-  height: 100vh;
-  padding-block: 2.25rem;
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) minmax(0, 42rem);
+  min-height: 100vh;
+  gap: 1.5rem;
+  justify-content: center;
+  padding: 2.25rem 1rem;
   overflow: auto;
-  background: var(--color-gray-lightest);
+  background: var(--color-bg-page);
 }
 
 .options__nav {
   display: flex;
-  width: 25%;
   flex-direction: column;
-  padding-top: 3rem;
-  padding-right: 1.5rem;
+  gap: 0.5rem;
+  padding-block-start: 3rem;
 }
 
 .options__content {
   display: flex;
-  width: 50%;
   flex-direction: column;
 }
 
@@ -220,24 +286,42 @@ export default {
 }
 
 .options__title {
-  margin-right: 0.25rem;
-  color: var(--color-blue);
+  margin-inline-end: 0.25rem;
+  color: var(--color-accent-text);
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 2rem;
 }
 
 .options__version {
-  color: var(--color-gray-dark);
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
+.options__status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
 .options__saving {
-  color: var(--color-gray-darkest);
+  color: var(--color-text-primary);
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.5rem;
+}
+
+.options__error {
+  max-width: 22rem;
+  color: var(--color-status-recording);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: end;
+}
+
+.options__error:empty {
+  display: none;
 }
 
 .options__field-group {
@@ -246,44 +330,40 @@ export default {
 
 .options__input {
   width: 100%;
-  height: 1.75rem;
+  min-height: 2.5rem;
   margin-bottom: 0.5rem;
   border-radius: 0.25rem;
-  background: var(--color-gray-lighter);
+  background: var(--color-bg-sunken);
+  color: var(--color-text-primary);
   padding-inline: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
 .options__input::placeholder {
-  color: var(--color-gray-darkish);
+  color: var(--color-text-secondary);
   opacity: 1;
 }
 
 .options__notice {
-  margin-left: 0.25rem;
-  color: var(--color-black-shady);
+  color: var(--color-text-primary);
   font-weight: 700;
 }
 
-.options__term {
-  font-style: italic;
-}
-
 .options__key-code {
+  display: flex;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
 .options__key-code-button {
-  --button-color: var(--color-white);
-
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
 .options__key-code-value {
-  margin-left: 0.75rem;
-  color: var(--color-gray-dark);
+  margin-inline-start: 0.75rem;
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
@@ -293,25 +373,29 @@ code {
 }
 
 a {
-  color: var(--color-blue);
+  color: var(--color-accent-text);
   font-size: 0.875rem;
   line-height: 1.25rem;
   text-align: right;
   text-decoration: underline;
+  text-decoration-skip-ink: auto;
+  text-decoration-thickness: from-font;
+  text-underline-position: from-font;
 }
 
 h2 {
   margin-bottom: 1.25rem;
-  color: var(--color-gray-darkish);
+  color: var(--color-text-secondary);
   font-size: 1.25rem;
   font-weight: 600;
   line-height: 1.75rem;
 }
 
-label {
+label,
+.options__field-label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #000;
+  color: var(--color-text-primary);
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25rem;
@@ -319,44 +403,72 @@ label {
 
 section {
   margin-bottom: 1.5rem;
-  border: 1px solid var(--color-gray-light);
+  border: 1px solid var(--color-border-default);
   border-radius: var(--radius-md);
-  background: var(--color-white);
+  background: var(--color-bg-surface);
   padding: 1rem 1rem 2.5rem;
 }
 
 p {
   margin-bottom: 0.5rem;
-  color: var(--color-gray-darkish);
+  color: var(--color-text-secondary);
   font-size: 0.75rem;
   line-height: 1rem;
 }
 
-:global(.dark .options) {
-  background: var(--color-black);
+.options__input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
-:global(.dark .options__version),
-:global(.dark .options__key-code-value) {
-  color: var(--color-gray-light);
+@media (prefers-reduced-motion: no-preference) {
+  .status-enter-active {
+    transition:
+      opacity 150ms var(--ease-in-out),
+      transform 150ms var(--ease-in-out);
+  }
+
+  .status-leave-active {
+    transition:
+      opacity 100ms var(--ease-in-out),
+      transform 100ms var(--ease-in-out);
+  }
+
+  .status-enter-from,
+  .status-leave-to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
-:global(.dark .options__saving),
-:global(.dark .options__notice),
-:global(.dark .options p) {
-  color: var(--color-white);
+@media (prefers-reduced-motion: reduce) {
+  .status-enter-active,
+  .status-leave-active {
+    transition: opacity 100ms var(--ease-in-out);
+  }
+
+  .status-enter-from,
+  .status-leave-to {
+    opacity: 0;
+  }
 }
 
-:global(.dark .options h2) {
-  color: var(--color-gray-light);
-}
+@media (max-width: 36rem) {
+  .options {
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: 1rem;
+  }
 
-:global(.dark .options label) {
-  color: var(--color-gray-lightest);
-}
+  .options__nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    padding-block-start: 0;
+  }
 
-:global(.dark .options section) {
-  border-color: var(--color-gray-dark);
-  background: var(--color-black-shady);
+  .options__nav a {
+    text-align: start;
+  }
 }
 </style>

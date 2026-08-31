@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
 import App from '../OptionsApp.vue'
+import storage from '../../services/storage'
 
 function createChromeLocalStorageMock(options) {
   let ops = { options: options || {} }
@@ -16,6 +17,7 @@ function createChromeLocalStorageMock(options) {
       },
       onChanged: {
         addListener: vi.fn(),
+        removeListener: vi.fn(),
       },
     },
   }
@@ -23,6 +25,7 @@ function createChromeLocalStorageMock(options) {
 
 describe('App.vue', () => {
   beforeEach(() => {
+    vi.restoreAllMocks()
     window.chrome = null
   })
 
@@ -32,6 +35,7 @@ describe('App.vue', () => {
 
     expect(wrapper.get('h1').text()).toBe('Headless Recorder')
     expect(wrapper.findAll('[role="switch"]')).toHaveLength(3)
+    expect(wrapper.findAll('[role="switch"]')[0].attributes('aria-checked')).toBe('true')
   })
 
   test('it loads the default options', () => {
@@ -89,10 +93,24 @@ describe('App.vue', () => {
     await vi.waitFor(() => expect(wrapper.vm.options.code.blankLinesBetweenBlocks).toBe(false))
 
     await wrapper.findAll('[role="switch"]')[0].trigger('click')
-    expect(wrapper.find('[role="alert"]').text()).toEqual('Saving...')
     await vi.waitFor(() => expect(wrapper.vm.options.code.blankLinesBetweenBlocks).toBe(true))
+    await vi.waitFor(() => expect(wrapper.find('[role="status"]').text()).toEqual('Saved'))
+    expect(wrapper.findAll('[role="switch"]')[0].attributes('aria-checked')).toBe('true')
 
     await wrapper.vm.load()
     expect(wrapper.vm.options.code.blankLinesBetweenBlocks).toBe(true)
+  })
+
+  test('it reports a storage failure', async () => {
+    window.chrome = createChromeLocalStorageMock()
+    vi.spyOn(storage, 'set').mockRejectedValueOnce(new Error('Storage unavailable'))
+    const wrapper = mount(App)
+    await vi.waitFor(() => expect(wrapper.vm.loading).toBe(false))
+
+    await wrapper.findAll('[role="switch"]')[0].trigger('click')
+
+    await vi.waitFor(() =>
+      expect(wrapper.find('[role="alert"]').text()).toBe('Unable to save. Try again.'),
+    )
   })
 })

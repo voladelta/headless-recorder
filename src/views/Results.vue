@@ -1,11 +1,12 @@
 <template>
   <div data-test-id="results-tab" class="results">
+    <h2 class="sr-only">Generated Playwright test</h2>
     <div class="results__content">
       <pre v-if="code" v-highlightjs="code" class="results__code-block">
       <code ref="code" class="javascript results__code"></code>
       </pre>
       <pre v-else>
-        <code>No code yet...</code>
+        <code>No code yet…</code>
       </pre>
     </div>
   </div>
@@ -59,6 +60,7 @@ export default {
 .results__content {
   padding: 0.5rem;
   background: var(--color-black);
+  color: var(--color-gray-lightest);
 }
 
 .results__code-block {
@@ -96,6 +98,6 @@ pre::-webkit-scrollbar-thumb {
 }
 
 pre::-webkit-scrollbar-corner {
-  background: yellow;
+  background: transparent;
 }
 </style>

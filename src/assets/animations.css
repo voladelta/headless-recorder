@@ -22,7 +22,7 @@
     transform: scale(1);
   }
 
-  0% {
+  50% {
     transform: scale(1.25);
   }
 
@@ -41,11 +41,13 @@
   }
 }
 
-.headless-recorder-flash {
-  animation-name: flash;
-  animation-duration: 0.5s;
-  animation-iteration-count: 1;
-  animation-timing-function: ease-in-out;
+@media (prefers-reduced-motion: no-preference) {
+  .headless-recorder-flash {
+    animation-name: flash;
+    animation-duration: 0.5s;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in-out;
+  }
 }
 
 .headless-recorder-camera-cursor {

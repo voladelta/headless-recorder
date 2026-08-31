@@ -1,38 +1,52 @@
 <template>
   <section class="recording">
-    <RecordingLabel class="recording__status" :is-paused="isPaused" :v-show="isRecording" />
-    <p class="recording__description">Headless recorder currently recording your browser events.</p>
+    <RecordingLabel class="recording__status" :is-paused="isPaused" v-show="isRecording" />
+    <p class="recording__description">Headless Recorder is recording your browser events.</p>
     <RoundButton big @click="$emit('stop')" class="recording__stop-button">
-      <div class="recording__stop-icon"></div>
+      <span class="sr-only">Stop recording</span>
+      <div class="recording__stop-icon" aria-hidden="true"></div>
     </RoundButton>
 
     <div class="recording__controls">
       <div class="recording__control recording__control--spaced">
-        <RoundButton medium @click="$emit('pause')" class="recording__control-button">
+        <RoundButton
+          medium
+          @click="$emit('pause')"
+          class="recording__control-button"
+          :aria-label="isPaused ? 'Resume recording' : 'Pause recording'"
+        >
           <img
             :src="`/icons/${darkMode ? 'dark' : 'light'}/play.svg`"
             v-show="isPaused"
             class="recording__control-icon"
-            alt="resume recording"
+            alt=""
+            aria-hidden="true"
           />
           <img
             :src="`/icons/${darkMode ? 'dark' : 'light'}/pause.svg`"
             v-show="!isPaused"
             class="recording__control-icon"
-            alt="pause recording"
+            alt=""
+            aria-hidden="true"
           />
         </RoundButton>
         <span class="recording__control-label">{{ isPaused ? 'RESUME' : 'PAUSE' }}</span>
       </div>
       <div class="recording__control">
-        <RoundButton medium @click="$emit('restart')" class="recording__control-button">
+        <RoundButton
+          medium
+          @click="$emit('restart')"
+          class="recording__control-button"
+          aria-label="Restart recording"
+        >
           <img
             :src="`/icons/${darkMode ? 'dark' : 'light'}/sync.svg`"
             class="recording__control-icon"
-            alt="restart recording"
+            alt=""
+            aria-hidden="true"
           />
         </RoundButton>
-        <span class="recording__control-label">RESTART</span>
+        <span class="recording__control-label">Restart</span>
       </div>
     </div>
   </section>
@@ -69,7 +83,7 @@ export default {
 
 .recording__description {
   width: 18rem;
-  color: var(--color-gray-dark);
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   line-height: 1.25rem;
   text-align: center;
@@ -120,14 +134,11 @@ export default {
 
 .recording__control-label {
   margin-top: 0.5rem;
-  color: var(--color-gray-new);
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.25rem;
-}
-
-:global(.dark .recording__description) {
-  color: var(--color-gray-light);
+  text-transform: uppercase;
 }
 
 :global(.dark .recording__stop-icon) {

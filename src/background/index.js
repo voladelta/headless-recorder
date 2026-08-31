@@ -208,14 +208,18 @@ class Background {
     }
 
     if (control === overlayActions.COPY) {
-      const { options = {} } = await storage.get('options')
-      const generator = new CodeGenerator(options.code)
-      const code = generator.generate(this._recording)
+      try {
+        const { options = {} } = await storage.get('options')
+        const generator = new CodeGenerator(options.code)
+        const code = generator.generate(this._recording)
 
-      await browser.sendTabMessage({
-        action: 'CODE',
-        value: code,
-      })
+        await browser.sendTabMessage({
+          action: 'CODE',
+          value: code,
+        })
+      } catch {
+        await browser.sendTabMessage({ action: 'CODE_COPY_ERROR' })
+      }
     }
 
     if (control === overlayActions.STOP) {

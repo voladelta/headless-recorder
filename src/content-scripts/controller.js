@@ -72,8 +72,16 @@ export default class HeadlessController {
         break
 
       case 'CODE':
-        await browser.copyToClipboard(msg.value)
-        this.store.commit('showCopy')
+        try {
+          await browser.copyToClipboard(msg.value)
+          this.store.commit('showCopy')
+        } catch {
+          this.store.commit('showCopyError')
+        }
+        break
+
+      case 'CODE_COPY_ERROR':
+        this.store.commit('showCopyError')
         break
     }
   }

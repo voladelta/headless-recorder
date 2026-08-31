@@ -1,5 +1,5 @@
 <template>
-  <div
+  <h2
     data-test-id="recording-badge"
     class="recording-label"
     :class="{
@@ -8,7 +8,7 @@
     }"
   >
     {{ text }}
-  </div>
+  </h2>
 </template>
 
 <script>
@@ -20,7 +20,7 @@ export default {
 
   computed: {
     text() {
-      return this.isPaused ? 'Paused' : 'Recording...'
+      return this.isPaused ? 'Paused' : 'Recording…'
     },
   },
 }
@@ -31,18 +31,20 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-red);
+  color: var(--color-status-recording);
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 2rem;
 }
 
 .recording-label--paused {
-  color: var(--color-yellow);
+  color: var(--color-status-paused);
 }
 
-.recording-label--active {
-  animation: recording-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@media (prefers-reduced-motion: no-preference) {
+  .recording-label--active {
+    animation: recording-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
 
 @keyframes recording-pulse {

@@ -1,25 +1,20 @@
 <template>
-  <div class="toggle-field">
-    <button
-      type="button"
-      class="toggle"
-      :class="modelValue ? 'toggle--on' : 'toggle--off'"
-      role="switch"
-      aria-checked="false"
-      @click="toggle"
-    >
-      <span
-        aria-hidden="true"
-        class="toggle__thumb"
-        :class="{ 'toggle__thumb--on': modelValue }"
-      ></span>
-    </button>
+  <button
+    type="button"
+    class="toggle-field"
+    role="switch"
+    :aria-checked="modelValue"
+    @click="toggle"
+  >
+    <span class="toggle" :class="modelValue ? 'toggle--on' : 'toggle--off'" aria-hidden="true">
+      <span class="toggle__thumb" :class="{ 'toggle__thumb--on': modelValue }"></span>
+    </span>
     <span class="toggle-field__label">
       <span class="toggle-field__text">
         <slot />
       </span>
     </span>
-  </div>
+  </button>
 </template>
 
 <script>
@@ -40,8 +35,17 @@ export default {
 <style scoped>
 .toggle-field {
   display: flex;
+  width: 100%;
   align-items: center;
   margin-bottom: 0.75rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: start;
+}
+
+.toggle-field:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .toggle {
@@ -50,25 +54,16 @@ export default {
   flex-shrink: 0;
   width: 2rem;
   height: 1rem;
-  cursor: pointer;
   border: 2px solid transparent;
   border-radius: 2147483647px;
-  transition: background-color 200ms var(--ease-in-out);
 }
 
 .toggle--on {
-  background: var(--color-blue);
+  background: var(--color-accent-solid);
 }
 
 .toggle--off {
-  background: var(--color-gray);
-}
-
-.toggle:focus {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--color-white),
-    0 0 0 4px var(--color-blue);
+  background: var(--color-control-muted);
 }
 
 .toggle__thumb {
@@ -78,10 +73,9 @@ export default {
   margin: 1px;
   pointer-events: none;
   border-radius: 2147483647px;
-  background: var(--color-white);
+  background: var(--color-bg-surface);
   box-shadow: var(--shadow-sm);
   translate: 0;
-  transition: translate 200ms var(--ease-in-out);
 }
 
 .toggle__thumb--on {
@@ -89,16 +83,28 @@ export default {
 }
 
 .toggle-field__label {
-  margin-left: 1rem;
+  margin-inline-start: 1rem;
 }
 
 .toggle-field__text {
-  color: var(--color-gray-dark);
+  color: var(--color-text-muted);
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
 
-:global(.dark .toggle-field__text) {
-  color: var(--color-gray-light);
+@media (hover: hover) and (pointer: fine) {
+  .toggle-field:hover .toggle-field__text {
+    color: var(--color-text-primary);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toggle {
+    transition: background-color 200ms var(--ease-in-out);
+  }
+
+  .toggle__thumb {
+    transition: translate 200ms var(--ease-in-out);
+  }
 }
 </style>

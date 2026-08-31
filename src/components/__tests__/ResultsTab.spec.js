@@ -6,7 +6,7 @@ describe('ResultsTab.vue', () => {
   test('shows its empty state', () => {
     const wrapper = mount(ResultsTab)
 
-    expect(wrapper.text()).toContain('No code yet...')
+    expect(wrapper.text()).toContain('No code yet…')
     expect(wrapper.find('code.javascript').exists()).toBe(false)
   })
 

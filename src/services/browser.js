@@ -33,7 +33,7 @@ export default {
         return Promise.reject()
       }
 
-      navigator.clipboard.writeText(text)
+      return navigator.clipboard.writeText(text)
     })
   },
 

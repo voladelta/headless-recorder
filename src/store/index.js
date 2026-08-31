@@ -3,6 +3,7 @@ import { createStore } from 'vuex'
 import { overlayActions } from '@/modules/overlay/constants'
 
 function clearState(state) {
+  state.copyStatus = 'idle'
   state.isClosed = false
   state.isPaused = false
   state.isStopped = false
@@ -15,7 +16,7 @@ function clearState(state) {
 const store = createStore({
   state() {
     return {
-      isCopying: false,
+      copyStatus: 'idle',
       isClosed: false,
       isPaused: false,
       isStopped: false,
@@ -38,8 +39,16 @@ const store = createStore({
     },
 
     showCopy(state) {
-      state.isCopying = true
-      setTimeout(() => (state.isCopying = false), 500)
+      state.copyStatus = 'success'
+      setTimeout(() => {
+        if (state.copyStatus === 'success') {
+          state.copyStatus = 'idle'
+        }
+      }, 1500)
+    },
+
+    showCopyError(state) {
+      state.copyStatus = 'error'
     },
 
     takeScreenshot(state) {
@@ -87,7 +96,8 @@ const store = createStore({
       chrome.runtime.sendMessage({ control: overlayActions.STOP })
     },
 
-    copy() {
+    copy(state) {
+      state.copyStatus = 'copying'
       chrome.runtime.sendMessage({ control: overlayActions.COPY })
     },
 

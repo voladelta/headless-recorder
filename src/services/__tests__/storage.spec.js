@@ -102,4 +102,11 @@ describe('set', () => {
       expect(e).toEqual('Browser storage not available')
     }
   })
+
+  it('reports a browser storage error', async () => {
+    const error = new Error('Storage quota exceeded')
+    window.chrome.runtime = { lastError: error }
+
+    await expect(storage.set({ age: 1 })).rejects.toBe(error)
+  })
 })

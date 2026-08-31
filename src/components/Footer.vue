@@ -1,7 +1,7 @@
 <template>
-  <div class="footer">
+  <footer class="footer">
     <span class="footer__version">Version {{ version }}</span>
-  </div>
+  </footer>
 </template>
 
 <script>
@@ -29,6 +29,6 @@ export default {
 }
 
 .footer__version {
-  color: var(--color-gray-darkish);
+  color: var(--color-text-secondary);
 }
 </style>

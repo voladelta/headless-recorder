@@ -11,10 +11,12 @@ describe('RecordingTab.vue', () => {
     })
 
     expect(wrapper.text()).toContain('RESUME')
-    expect(wrapper.find('img[alt="resume recording"]').attributes('style')).toBeUndefined()
-    expect(wrapper.find('img[alt="pause recording"]').attributes('style')).toContain(
-      'display: none',
-    )
+    expect(wrapper.get('button[aria-label="Resume recording"]').exists()).toBe(true)
+    expect(wrapper.findAll('img')[0].attributes('style')).toBeUndefined()
+    expect(wrapper.findAll('img')[1].attributes('style')).toContain('display: none')
+    expect(
+      wrapper.findAll('img').every((image) => image.attributes('aria-hidden') === 'true'),
+    ).toBe(true)
   })
 
   test('emits recording controls', async () => {
