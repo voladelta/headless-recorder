@@ -57,14 +57,14 @@ export default {
     chrome.tabs.create({ url: DOCS_URL })
   },
 
-  openChecklyRunner({ code, runner, isLoggedIn }) {
+  openChecklyRunner({ code, isLoggedIn }) {
     if (!isLoggedIn) {
       chrome.tabs.create({ url: SIGNUP_URL })
       return
     }
 
     const script = encodeURIComponent(btoa(code))
-    const url = `${RUN_URL}?framework=${runner}&script=${script}`
+    const url = `${RUN_URL}?framework=playwright&script=${script}`
     chrome.tabs.create({ url })
   },
 }

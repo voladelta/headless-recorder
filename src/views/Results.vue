@@ -3,22 +3,6 @@
     data-test-id="results-tab"
     class="flex flex-col bg-blue-light overflow-hidden mt-4 h-100 dark:bg-black"
   >
-    <div class="flex flex-row">
-      <button
-        v-for="tab in tabs"
-        :key="tab"
-        class="w-1/2 p-2 font-semibold text-xs capitalize rounded-t"
-        :class="
-          activeTab === tab
-            ? 'bg-black text-gray-lightest dark:bg-black-shady'
-            : 'text-gray-dark dark:text-gray'
-        "
-        @click.prevent="changeTab(tab)"
-      >
-        {{ tab }}
-      </button>
-    </div>
-
     <div class="sc p-2 bg-black dark:bg-black-shady">
       <pre
         v-if="code"
@@ -36,8 +20,6 @@
 <script>
 import hljs from 'highlight.js/lib/core'
 import javascript from 'highlight.js/lib/languages/javascript'
-
-import { headlessTypes } from '@/modules/code-generator/constants'
 
 hljs.registerLanguage('javascript', javascript)
 
@@ -63,46 +45,9 @@ export default {
   },
 
   props: {
-    puppeteer: {
+    code: {
       type: String,
       default: '',
-    },
-    playwright: {
-      type: String,
-      default: '',
-    },
-    options: {
-      type: Object,
-      default: () => ({}),
-    },
-  },
-
-  data() {
-    return {
-      activeTab: headlessTypes.PLAYWRIGHT,
-      tabs: [headlessTypes.PLAYWRIGHT, headlessTypes.PUPPETEER],
-    }
-  },
-
-  computed: {
-    code() {
-      return this.activeTab === headlessTypes.PUPPETEER ? this.puppeteer : this.playwright
-    },
-  },
-
-  mounted() {
-    if (!this.options?.code?.showPlaywrightFirst) {
-      this.activeTab = headlessTypes.PUPPETEER
-      this.tabs = this.tabs.reverse()
-    }
-
-    this.$emit('update:tab', this.activeTab)
-  },
-
-  methods: {
-    changeTab(tab) {
-      this.activeTab = tab
-      this.$emit('update:tab', tab)
     },
   },
 }

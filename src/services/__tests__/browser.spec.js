@@ -92,13 +92,15 @@ describe('getChecklyCookie', () => {
 
 describe('openChecklyRunner', () => {
   it('is not logged in', () => {
-    browser.openChecklyRunner({ code: 1, runner: 2, isLoggedIn: false })
+    browser.openChecklyRunner({ code: 'test code', isLoggedIn: false })
     expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
   })
 
   it('is logged in', () => {
-    browser.openChecklyRunner({ code: 1, runner: 2, isLoggedIn: true })
-    expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
+    browser.openChecklyRunner({ code: 'test code', isLoggedIn: true })
+    expect(window.chrome.tabs.create).toHaveBeenCalledWith({
+      url: expect.stringContaining('?framework=playwright&script='),
+    })
   })
 })
 

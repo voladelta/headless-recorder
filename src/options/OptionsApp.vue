@@ -68,22 +68,11 @@
       </section>
 
       <section>
-        <h2>Generator</h2>
-        <Toggle v-model="options.code.wrapAsync"> Wrap code in async function </Toggle>
-        <Toggle v-model="options.code.headless">
-          Set <code>headless</code> in playwright/puppeteer launch options
-        </Toggle>
-        <Toggle v-model="options.code.waitForNavigation">
-          Add <code>waitForNavigation</code> lines on navigation
-        </Toggle>
-        <Toggle v-model="options.code.waitForSelectorOnClick">
-          Add <code>waitForSelector</code> lines before every
-          <code>page.click()</code>
-        </Toggle>
+        <h2>Playwright generator</h2>
+        <p>Generate Playwright Test code with locator-based actions and automatic waiting.</p>
         <Toggle v-model="options.code.blankLinesBetweenBlocks">
           Add blank lines between code blocks
         </Toggle>
-        <Toggle v-model="options.code.showPlaywrightFirst"> Show Playwright tab first </Toggle>
       </section>
 
       <section>
@@ -106,7 +95,7 @@ import { version } from '../../package.json'
 
 import storage from '@/services/storage'
 import { isDarkMode } from '@/services/constants'
-import { defaults as code } from '@/modules/code-generator/base-generator'
+import { defaults as code } from '@/modules/code-generator'
 
 import Button from '@/components/Button.vue'
 import Toggle from '@/components/Toggle.vue'
@@ -170,7 +159,12 @@ export default {
       const { options = {} } = await storage.get('options')
       const defaults = createDefaultOptions()
       this.options = {
-        code: { ...defaults.code, ...options.code },
+        code: {
+          blankLinesBetweenBlocks:
+            options.code?.blankLinesBetweenBlocks ?? defaults.code.blankLinesBetweenBlocks,
+          dataAttribute: options.code?.dataAttribute ?? defaults.code.dataAttribute,
+          keyCode: options.code?.keyCode ?? defaults.code.keyCode,
+        },
         extension: { ...defaults.extension, ...options.extension },
       }
 

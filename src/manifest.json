@@ -2,7 +2,7 @@
   "name": "Headless Recorder",
   "version": "1.1.0",
   "manifest_version": 3,
-  "description": "A Chrome extension for recording browser interaction and generating Puppeteer & Playwright scripts",
+  "description": "A Chrome extension for recording browser interactions and generating Playwright tests",
   "default_locale": "en",
   "permissions": ["storage", "webNavigation", "activeTab", "cookies", "scripting"],
   "host_permissions": ["*://*/*"],

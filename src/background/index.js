@@ -163,17 +163,6 @@ class Background {
     }
   }
 
-  recordNavigation(sender) {
-    return this.recordEvent(
-      {
-        selector: undefined,
-        value: undefined,
-        action: headlessActions.NAVIGATION,
-      },
-      sender,
-    )
-  }
-
   recordScreenshot(value, sender) {
     return this.recordEvent(
       {
@@ -220,12 +209,12 @@ class Background {
 
     if (control === overlayActions.COPY) {
       const { options = {} } = await storage.get('options')
-      const generator = new CodeGenerator(options)
+      const generator = new CodeGenerator(options.code)
       const code = generator.generate(this._recording)
 
       await browser.sendTabMessage({
         action: 'CODE',
-        value: options?.code?.showPlaywrightFirst ? code.playwright : code.puppeteer,
+        value: code,
       })
     }
 
@@ -318,17 +307,13 @@ class Background {
     }
   }
 
-  async handleNavigation({ frameId, url }) {
+  async handleNavigation() {
     if (!this._isRecording) {
       return
     }
 
     await browser.injectContentScript()
     await this.toggleOverlay({ open: true, pause: this._isPaused })
-
-    if (frameId === 0) {
-      await this.recordNavigation({ frameId, url })
-    }
   }
 
   handleBeforeNavigate() {

@@ -14,13 +14,7 @@
       v-show="!showResultsTab && isRecording"
     />
 
-    <Results
-      :puppeteer="code"
-      :playwright="codeForPlaywright"
-      :options="options"
-      v-if="showResultsTab"
-      v-on:update:tab="currentResultTab = $event"
-    />
+    <Results :code="code" v-if="showResultsTab" />
 
     <!-- TODO: Move this into its own component -->
     <div
@@ -95,13 +89,10 @@ export default {
       isRecording: false,
       isPaused: false,
       isCopying: false,
-      currentResultTab: null,
-
       liveEvents: [],
       recording: [],
 
       code: '',
-      codeForPlaywright: '',
       options: defaultOptions,
     }
   },
@@ -165,7 +156,6 @@ export default {
     cleanUp() {
       this.recording = this.liveEvents = []
       this.code = ''
-      this.codeForPlaywright = ''
       this.showResultsTab = this.isRecording = this.isPaused = false
       this.storeState()
     },
@@ -173,11 +163,9 @@ export default {
     async generateCode() {
       const { recording, options = { code: {} } } = await storage.get(['recording', 'options'])
       const generator = new CodeGenerator(options.code)
-      const { puppeteer, playwright } = generator.generate(recording)
 
       this.recording = recording
-      this.code = puppeteer
-      this.codeForPlaywright = playwright
+      this.code = generator.generate(recording)
       this.showResultsTab = true
     },
 
@@ -191,7 +179,6 @@ export default {
         controls = {},
         code = '',
         options,
-        codeForPlaywright = '',
         recording,
         clear,
         pause,
@@ -200,7 +187,6 @@ export default {
         'controls',
         'code',
         'options',
-        'codeForPlaywright',
         'recording',
         'clear',
         'pause',
@@ -212,7 +198,6 @@ export default {
       this.options = options || defaultOptions
 
       this.code = code
-      this.codeForPlaywright = codeForPlaywright
 
       if (this.isRecording) {
         this.liveEvents = recording
@@ -240,7 +225,6 @@ export default {
     storeState() {
       storage.set({
         code: this.code,
-        codeForPlaywright: this.codeForPlaywright,
         controls: { isRecording: this.isRecording, isPaused: this.isPaused },
       })
     },
@@ -261,13 +245,12 @@ export default {
     },
 
     getCode() {
-      return this.currentResultTab === 'puppeteer' ? this.code : this.codeForPlaywright
+      return this.code
     },
 
     run() {
       browser.openChecklyRunner({
         code: this.getCode(),
-        runner: this.currentResultTab,
         isLoggedIn: this.isLoggedIn,
       })
     },

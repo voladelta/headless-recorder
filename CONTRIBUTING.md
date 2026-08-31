@@ -1,6 +1,8 @@
 # Contributing
 
-HI! Thanks you for your interest in Puppeteer Recorder! We'd love to accept your patches and contributions, but please remember that this project was started first and foremost to serve the users of the Checkly API and Site transaction monitoring service.
+Thank you for your interest in Headless Recorder. We welcome patches and contributions. The
+project records browser interactions and generates Playwright tests for the Checkly API and
+browser monitoring service.
 
 ## New feature guidelines
 
@@ -60,11 +62,11 @@ footer
 ```
 
 1. _label_ is one of the following:
-   - `fix` - puppeteer bug fixes.
-   - `feat` - puppeteer features.
+   - `fix` - bug fixes.
+   - `feat` - features.
    - `docs` - changes to docs, e.g. `docs(api.md): ..` to change documentation.
-   - `test` - changes to puppeteer tests infrastructure.
-   - `style` - puppeteer code style: spaces/alignment/wrapping etc.
+   - `test` - changes to test infrastructure.
+   - `style` - code style changes, such as spaces, alignment, and wrapping.
    - `chore` - build-related work, e.g. doclint changes / travis / appveyor.
 2. _namespace_ is put in parenthesis after label and is optional.
 3. _title_ is a brief summary of changes.

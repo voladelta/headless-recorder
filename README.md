@@ -5,7 +5,7 @@
 </p>
 
 Headless Recorder is a Chrome extension that records browser interactions and generates
-[Playwright](https://playwright.dev/) or [Puppeteer](https://pptr.dev/) scripts.
+[Playwright Test](https://playwright.dev/docs/intro) code.
 
 > [!IMPORTANT]
 > This repository is an independent, modernized fork of
@@ -25,8 +25,8 @@ Headless Recorder is a Chrome extension that records browser interactions and ge
 ## Features
 
 - Record clicks, text input, selection changes, and keyboard events.
-- Generate Playwright and Puppeteer scripts.
-- Add navigation waits, viewport settings, and selector waits.
+- Generate Playwright tests with locator-based actions and automatic waiting.
+- Add viewport settings to generated tests.
 - Preview CSS selectors.
 - Take full-page and element screenshots.
 - Pause, resume, or restart a recording.
@@ -44,6 +44,9 @@ Headless Recorder is a Chrome extension that records browser interactions and ge
 5. Wait for each page navigation to finish before you continue.
 6. Pause the recorder when you must navigate without recording.
 7. Stop the recorder to generate the script.
+
+The result is a complete Playwright Test file. Save it with a `.spec.js` extension in a project
+that has `@playwright/test` installed, then run it with `npx playwright test`.
 
 ### Keyboard shortcuts
 
@@ -90,10 +93,10 @@ Run the Chrome integration tests separately:
 bun run test:integration
 ```
 
-If Puppeteer does not have a compatible test browser, install Chrome for Testing:
+If Playwright does not have a compatible test browser, install Chromium:
 
 ```bash
-bunx puppeteer browsers install chrome
+bunx playwright install chromium
 ```
 
 The available individual checks are:

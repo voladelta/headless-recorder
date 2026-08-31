@@ -1,10 +1,9 @@
-import puppeteer from 'puppeteer'
-import { launchPuppeteerWithExtension } from '@/__tests__/helpers'
+import { launchPlaywrightWithExtension } from '@/__tests__/helpers'
 import { waitForAndGetEvents, cleanEventLog, startServer } from './helpers'
 
 let server
 let port
-let browser
+let context
 let page
 
 describe('attributes', () => {
@@ -25,24 +24,23 @@ describe('attributes', () => {
   })
 
   beforeEach(async () => {
-    browser = await launchPuppeteerWithExtension(puppeteer)
-    page = await browser.newPage()
+    context = await launchPlaywrightWithExtension()
+    page = await context.newPage()
     await page.goto(`http://localhost:${port}/`)
     await cleanEventLog(page)
   })
 
   afterEach(async () => {
-    await browser.close()
+    await context?.close()
   })
 
   test('it should load the content', async () => {
-    const content = await page.$('#content-root')
-    expect(content).toBeTruthy()
+    expect(await page.locator('#content-root').count()).toBe(1)
   })
 
   test('it should use data attributes throughout selector', async () => {
     await page.evaluate('window.headlessRecorder.store.commit("setDataAttribute", "data-qa")')
-    await page.click('span')
+    await page.locator('span').click()
 
     const event = (await waitForAndGetEvents(page, 1))[0]
     expect(event.selector).toEqual(
@@ -52,7 +50,7 @@ describe('attributes', () => {
 
   test('it should use data attributes throughout selector even when id is set', async () => {
     await page.evaluate('window.headlessRecorder.store.commit("setDataAttribute", "data-qa")')
-    await page.click('#link')
+    await page.locator('#link').click()
 
     const event = (await waitForAndGetEvents(page, 1))[0]
     expect(event.selector).toEqual('[data-qa="link"]')
@@ -60,7 +58,7 @@ describe('attributes', () => {
 
   test('it should use id throughout selector when data attributes is not set', async () => {
     await page.evaluate('window.headlessRecorder.store.commit("setDataAttribute", null)')
-    await page.click('#link')
+    await page.locator('#link').click()
 
     const event = (await waitForAndGetEvents(page, 1))[0]
     expect(event.selector).toEqual('#link')

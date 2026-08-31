@@ -31,19 +31,36 @@ describe('App.vue', () => {
     const wrapper = mount(App)
 
     expect(wrapper.get('h1').text()).toBe('Headless Recorder')
-    expect(wrapper.findAll('[role="switch"]')).toHaveLength(8)
+    expect(wrapper.findAll('[role="switch"]')).toHaveLength(3)
   })
 
   test('it loads the default options', () => {
     window.chrome = createChromeLocalStorageMock()
     const wrapper = mount(App)
-    expect(wrapper.vm.$data.options.code.wrapAsync).toBe(false)
+    expect(wrapper.vm.$data.options.code.blankLinesBetweenBlocks).toBe(true)
   })
 
   test('it has the default key code for capturing inputs as 9 (Tab)', () => {
     window.chrome = createChromeLocalStorageMock()
     const wrapper = mount(App)
     expect(wrapper.vm.$data.options.code.keyCode).toBe(9)
+  })
+
+  test('it removes options from the old multi-generator output', async () => {
+    window.chrome = createChromeLocalStorageMock({
+      code: {
+        showPlaywrightFirst: false,
+        waitForSelectorOnClick: true,
+      },
+    })
+    const wrapper = mount(App)
+
+    await vi.waitFor(() => expect(wrapper.vm.options.code.keyCode).toBe(9))
+    expect(wrapper.vm.options.code).toEqual({
+      blankLinesBetweenBlocks: true,
+      dataAttribute: '',
+      keyCode: 9,
+    })
   })
 
   test('clicking the button will listen for the next keydown and update the key code option', () => {
@@ -65,17 +82,17 @@ describe('App.vue', () => {
   })
 
   test("it stores and loads the user's edited options", async () => {
-    const options = { code: { wrapAsync: true } }
+    const options = { code: { blankLinesBetweenBlocks: false } }
     window.chrome = createChromeLocalStorageMock(options)
     const wrapper = mount(App)
 
-    await vi.waitFor(() => expect(wrapper.vm.options.code.wrapAsync).toBe(true))
+    await vi.waitFor(() => expect(wrapper.vm.options.code.blankLinesBetweenBlocks).toBe(false))
 
     await wrapper.findAll('[role="switch"]')[0].trigger('click')
     expect(wrapper.find('[role="alert"]').text()).toEqual('Saving...')
-    await vi.waitFor(() => expect(wrapper.vm.options.code.wrapAsync).toBe(false))
+    await vi.waitFor(() => expect(wrapper.vm.options.code.blankLinesBetweenBlocks).toBe(true))
 
     await wrapper.vm.load()
-    expect(wrapper.vm.options.code.wrapAsync).toBe(false)
+    expect(wrapper.vm.options.code.blankLinesBetweenBlocks).toBe(true)
   })
 })
