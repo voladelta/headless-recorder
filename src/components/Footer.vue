@@ -1,6 +1,6 @@
 <template>
-  <div class="flex px-4 py-3 justify-end items-center mt-3">
-    <span class="text-gray-darkish">Version {{ version }}</span>
+  <div class="footer">
+    <span class="footer__version">Version {{ version }}</span>
   </div>
 </template>
 
@@ -18,3 +18,17 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.footer__version {
+  color: var(--color-gray-darkish);
+}
+</style>

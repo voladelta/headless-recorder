@@ -23,12 +23,23 @@ describe('install', () => {
       return getComputedStyle(element).backgroundColor
     })
     expect(lightBackground).toBe('rgb(249, 250, 252)')
+    expect(
+      await popup.locator('.header__title').evaluate((element) => getComputedStyle(element).color),
+    ).toBe('rgb(31, 45, 61)')
 
     const darkBackground = await popup.locator('#app > div').evaluate((element) => {
       document.body.classList.add('dark')
       return getComputedStyle(element).backgroundColor
     })
     expect(darkBackground).toBe('rgb(22, 22, 22)')
+    expect(
+      await popup.locator('.header__title').evaluate((element) => getComputedStyle(element).color),
+    ).toBe('rgb(249, 250, 252)')
+    expect(
+      await popup
+        .locator('.home__record-button')
+        .evaluate((element) => getComputedStyle(element).borderColor),
+    ).toBe('rgb(60, 72, 88)')
 
     await context.close()
   }, 20000)

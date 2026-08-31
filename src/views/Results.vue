@@ -1,15 +1,8 @@
 <template>
-  <div
-    data-test-id="results-tab"
-    class="flex flex-col bg-blue-light overflow-hidden mt-4 h-100 dark:bg-black"
-  >
-    <div class="sc p-2 bg-black dark:bg-black-shady">
-      <pre
-        v-if="code"
-        v-highlightjs="code"
-        class="overflow-auto bg-black dark:bg-black-shady h-100"
-      >
-      <code ref="code" class="javascript bg-black dark:bg-black-shady px-2 break-word whitespace-pre-wrap overflow-x-hidden"></code>
+  <div data-test-id="results-tab" class="results">
+    <div class="results__content">
+      <pre v-if="code" v-highlightjs="code" class="results__code-block">
+      <code ref="code" class="javascript results__code"></code>
       </pre>
       <pre v-else>
         <code>No code yet...</code>
@@ -54,6 +47,39 @@ export default {
 </script>
 
 <style scoped>
+.results {
+  display: flex;
+  height: 27rem;
+  flex-direction: column;
+  margin-top: 1rem;
+  overflow: hidden;
+  background: var(--color-blue-light);
+}
+
+.results__content {
+  padding: 0.5rem;
+  background: var(--color-black);
+}
+
+.results__code-block {
+  height: 27rem;
+  overflow: auto;
+  background: var(--color-black);
+}
+
+.results__code {
+  white-space: pre-wrap;
+}
+
+:global(.dark .results) {
+  background: var(--color-black);
+}
+
+:global(.dark .results__content),
+:global(.dark .results__code-block) {
+  background: var(--color-black-shady);
+}
+
 pre::-webkit-scrollbar {
   height: 8px;
   width: 8px;

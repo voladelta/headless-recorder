@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gray-lightest dark:bg-black flex flex-col overflow-hidden">
+  <div class="popup">
     <Header @options="openOptions" @help="goHelp" @dark="toggleDarkMode" />
 
     <Home v-if="!showResultsTab && !isRecording" @start="toggleRecord" />
@@ -17,20 +17,21 @@
     <Results :code="code" v-if="showResultsTab" />
 
     <!-- TODO: Move this into its own component -->
-    <div
-      data-test-id="results-footer"
-      class="flex py-2 px-3 justify-between bg-black-shady"
-      v-show="showResultsTab"
-    >
-      <Button dark class="mr-2" @click="restart" v-show="code">
-        <img src="/icons/dark/sync.svg" class="mr-1" alt="restart recording" />
+    <div data-test-id="results-footer" class="results-footer" v-show="showResultsTab">
+      <Button dark class="results-footer__button" @click="restart" v-show="code">
+        <img src="/icons/dark/sync.svg" class="results-footer__icon" alt="restart recording" />
         Restart
       </Button>
-      <Button dark class="mr-2 w-34" @click="copyCode" v-show="code">
+      <Button
+        dark
+        class="results-footer__button results-footer__button--copy"
+        @click="copyCode"
+        v-show="code"
+      >
         <img
           v-show="!isCopying"
           src="/icons/dark/duplicate.svg"
-          class="mr-1"
+          class="results-footer__icon"
           alt="copy code to clipboard"
         />
         <span v-show="!isCopying">Copy to clipboard</span>
@@ -249,6 +250,36 @@ export default {
 html {
   width: 386px;
   height: 535px;
+}
+
+.popup {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-gray-lightest);
+}
+
+.dark .popup {
+  background: var(--color-black);
+}
+
+.results-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-black-shady);
+}
+
+.results-footer__button {
+  margin-right: 0.5rem;
+}
+
+.results-footer__button--copy {
+  width: 8.6rem;
+}
+
+.results-footer__icon {
+  margin-right: 0.25rem;
 }
 
 button:focus-visible {

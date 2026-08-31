@@ -1,8 +1,11 @@
 <template>
   <div
     data-test-id="recording-badge"
-    class="flex text-2xl justify-center items-center text-red font-semibold"
-    :class="{ 'text-yellow': text === 'Paused', 'animate-pulse': text !== 'Paused' }"
+    class="recording-label"
+    :class="{
+      'recording-label--paused': text === 'Paused',
+      'recording-label--active': text !== 'Paused',
+    }"
   >
     {{ text }}
   </div>
@@ -22,3 +25,29 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.recording-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-red);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 2rem;
+}
+
+.recording-label--paused {
+  color: var(--color-yellow);
+}
+
+.recording-label--active {
+  animation: recording-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes recording-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+</style>

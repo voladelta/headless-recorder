@@ -1,33 +1,28 @@
 <template>
-  <main class="bg-gray-lightest flex py-9 w-full h-screen overflow-auto dark:bg-black">
-    <div class="flex flex-col w-1/4 pt-12 pr-6">
+  <main class="options">
+    <nav class="options__nav">
       <a href="https://github.com/voladelta/headless-recorder#readme" target="_blank">Docs</a>
       <a href="https://github.com/voladelta/headless-recorder" target="_blank">GitHub</a>
       <a href="https://github.com/voladelta/headless-recorder/blob/main/CHANGELOG.md"
         >Release notes</a
       >
-    </div>
-    <div class="flex flex-col w-1/2">
-      <header class="flex flex-row justify-between items-center mb-3.5">
-        <div class="flex items-baseline">
-          <h1 class="text-blue text-2xl font-bold mr-1">Headless Recorder</h1>
-          <span class="text-gray-dark dark:text-gray-light text-sm">v{{ version }}</span>
+    </nav>
+    <div class="options__content">
+      <header class="options__header">
+        <div class="options__brand">
+          <h1 class="options__title">Headless Recorder</h1>
+          <span class="options__version">v{{ version }}</span>
         </div>
-        <span
-          role="alert"
-          class="text-gray-darkest dark:text-white text-base font-semibold"
-          v-show="saving"
-          >Saving...</span
-        >
+        <span role="alert" class="options__saving" v-show="saving">Saving...</span>
       </header>
 
       <section>
         <h2>Recorder</h2>
         <label for="custom-data-attribute">Custom data attribute</label>
-        <div class="mb-6">
+        <div class="options__field-group">
           <input
             id="custom-data-attribute"
-            class="w-full placeholder-gray-darkish bg-gray-lighter h-7 rounded px-2 mb-2 text-sm"
+            class="options__input"
             type="text"
             v-model.trim="options.code.dataAttribute"
             @change="save"
@@ -39,19 +34,19 @@
           </p>
           <p>
             <span role="img" aria-label="siren">🚨</span>
-            <span class="ml-1 font-bold text-black-shady dark:text-white"
-              >When <span class="italic">"custom data attribute"</span>&nbsp; is set, it will take
-              precedence from over any other selector (even ID)
+            <span class="options__notice"
+              >When <span class="options__term">"custom data attribute"</span>&nbsp; is set, it will
+              take precedence from over any other selector (even ID)
             </span>
           </p>
         </div>
         <div>
           <label>Set key code</label>
-          <div class="mb-2">
-            <Button @click="listenForKeyCodePress" class="font-semibold text-white text-sm">
+          <div class="options__key-code">
+            <Button @click="listenForKeyCodePress" class="options__key-code-button">
               {{ recordingKeyCodePress ? 'Capturing...' : 'Record Key Stroke' }}
             </Button>
-            <span class="text-gray-dark dark:text-gray-light text-sm ml-3">
+            <span class="options__key-code-value">
               {{ options.code.keyCode }}
             </span>
           </div>
@@ -71,7 +66,7 @@
       </section>
 
       <section>
-        <h2 class="">Extension</h2>
+        <h2>Extension</h2>
         <Toggle v-model="options.extension.darkMode">
           Use Dark Mode {{ options.extension.darkMode }}
         </Toggle>
@@ -188,39 +183,180 @@ export default {
 </script>
 
 <style scoped>
-@reference '../assets/tailwind.css';
-
-body {
-  background: #f9fafc;
+.options {
+  display: flex;
+  width: 100%;
   height: 100vh;
+  padding-block: 2.25rem;
+  overflow: auto;
+  background: var(--color-gray-lightest);
 }
 
-body.dark {
-  background: #161616;
+.options__nav {
+  display: flex;
+  width: 25%;
+  flex-direction: column;
+  padding-top: 3rem;
+  padding-right: 1.5rem;
+}
+
+.options__content {
+  display: flex;
+  width: 50%;
+  flex-direction: column;
+}
+
+.options__header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.875rem;
+}
+
+.options__brand {
+  display: flex;
+  align-items: baseline;
+}
+
+.options__title {
+  margin-right: 0.25rem;
+  color: var(--color-blue);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 2rem;
+}
+
+.options__version {
+  color: var(--color-gray-dark);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.options__saving {
+  color: var(--color-gray-darkest);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+}
+
+.options__field-group {
+  margin-bottom: 1.5rem;
+}
+
+.options__input {
+  width: 100%;
+  height: 1.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--color-gray-lighter);
+  padding-inline: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.options__input::placeholder {
+  color: var(--color-gray-darkish);
+  opacity: 1;
+}
+
+.options__notice {
+  margin-left: 0.25rem;
+  color: var(--color-black-shady);
+  font-weight: 700;
+}
+
+.options__term {
+  font-style: italic;
+}
+
+.options__key-code {
+  margin-bottom: 0.5rem;
+}
+
+.options__key-code-button {
+  --button-color: var(--color-white);
+
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.options__key-code-value {
+  margin-left: 0.75rem;
+  color: var(--color-gray-dark);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 code {
-  @apply font-semibold;
+  font-weight: 600;
 }
 
 a {
-  @apply text-blue underline text-sm text-right;
+  color: var(--color-blue);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  text-align: right;
+  text-decoration: underline;
 }
 
 h2 {
-  @apply text-gray-darkish text-xl font-semibold mb-5 dark:text-gray-light;
+  margin-bottom: 1.25rem;
+  color: var(--color-gray-darkish);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.75rem;
 }
 
 label {
+  display: block;
+  margin-bottom: 0.5rem;
   color: #000;
-  @apply font-semibold text-sm mb-2 block dark:text-gray-lightest;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
 }
 
 section {
-  @apply bg-white border-gray-light border border-solid rounded-md p-4 pb-10 mb-6 dark:bg-black-shady dark:border-gray-dark;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+  padding: 1rem 1rem 2.5rem;
 }
 
 p {
-  @apply text-gray-darkish text-xs mb-2 dark:text-white;
+  margin-bottom: 0.5rem;
+  color: var(--color-gray-darkish);
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+:global(.dark .options) {
+  background: var(--color-black);
+}
+
+:global(.dark .options__version),
+:global(.dark .options__key-code-value) {
+  color: var(--color-gray-light);
+}
+
+:global(.dark .options__saving),
+:global(.dark .options__notice),
+:global(.dark .options p) {
+  color: var(--color-white);
+}
+
+:global(.dark .options h2) {
+  color: var(--color-gray-light);
+}
+
+:global(.dark .options label) {
+  color: var(--color-gray-lightest);
+}
+
+:global(.dark .options section) {
+  border-color: var(--color-gray-dark);
+  background: var(--color-black-shady);
 }
 </style>

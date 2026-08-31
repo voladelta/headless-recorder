@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 
+import '@/assets/base.css'
 import '@/assets/code.css'
-import '@/assets/tailwind.css'
 
 import App from './PopupApp.vue'
 

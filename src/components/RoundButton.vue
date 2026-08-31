@@ -1,7 +1,7 @@
 <template>
   <button
-    class="p-2 bg-white rounded-full border-gray-light border-solid border-4 hover:bg-gray-lightest dark:hover:bg-gray-hover dark:bg-black-shady dark:border-gray-dark"
-    :class="{ 'btn-small': small, 'btn-medium': medium }"
+    class="round-button"
+    :class="{ 'round-button--small': small, 'round-button--medium': medium }"
   >
     <slot />
   </button>
@@ -18,14 +18,35 @@ export default {
 </script>
 
 <style scoped>
-.btn-small {
-  border-radius: 50%;
+.round-button {
+  border: 4px solid var(--color-gray-light);
+  border-radius: 2147483647px;
+  background: var(--color-white);
+  padding: 0.5rem;
+}
+
+.round-button--small {
   height: 36px;
   width: 36px;
 }
 
-.btn-medium {
+.round-button--medium {
   height: 72px;
   width: 72px;
+}
+
+:global(.dark .round-button) {
+  border-color: var(--color-gray-dark);
+  background: var(--color-black-shady);
+}
+
+@media (hover: hover) {
+  .round-button:hover {
+    background: var(--color-gray-lightest);
+  }
+
+  :global(.dark .round-button:hover) {
+    background: var(--color-gray-hover);
+  }
 }
 </style>
