@@ -29,7 +29,12 @@ export default class HeadlessController {
   }
 
   listenBackgroundMessages() {
-    this.backgroundListener = this.backgroundListener || this.handleBackgroundMessages.bind(this)
+    this.backgroundListener =
+      this.backgroundListener ||
+      ((message) => {
+        if (message?.action) void this.handleBackgroundMessages(message)
+        return false
+      })
     chrome.runtime.onMessage.addListener(this.backgroundListener)
   }
 

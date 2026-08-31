@@ -27,6 +27,41 @@ export default {
     })
   },
 
+  async injectContentScriptInto(tabId, documentId) {
+    const messageOptions = { frameId: 0 }
+    if (documentId) messageOptions.documentId = documentId
+    try {
+      const response = await chrome.tabs.sendMessage(
+        tabId,
+        { type: 'HEADLESS_RECORDER_PING' },
+        messageOptions,
+      )
+      if (response?.ready) return
+    } catch {
+      // The target document does not have this extension script yet.
+    }
+
+    const target = { tabId, frameIds: [0] }
+    await chrome.scripting.insertCSS({
+      target,
+      files: [CONTENT_SCRIPT_STYLES_PATH],
+    })
+    return chrome.scripting.executeScript({
+      target,
+      files: [CONTENT_SCRIPT_PATH],
+    })
+  },
+
+  sendTargetMessage(target, message) {
+    if (target.frameId !== 0 || typeof target.documentId !== 'string' || !target.documentId) {
+      throw new Error('An exact main-frame document target is required.')
+    }
+    return chrome.tabs.sendMessage(target.tabId, message, {
+      frameId: target.frameId,
+      documentId: target.documentId,
+    })
+  },
+
   copyToClipboard(text) {
     return navigator.permissions.query({ name: 'clipboard-write' }).then((result) => {
       if (result.state !== 'granted' && result.state !== 'prompt') {

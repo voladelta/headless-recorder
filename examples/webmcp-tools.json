@@ -1,0 +1,41 @@
+[
+  {
+    "name": "type_post",
+    "description": "Type text into the demo post field without submitting it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Text to type into the post field.",
+          "maxLength": 1000
+        }
+      },
+      "required": ["text"]
+    },
+    "steps": [
+      {
+        "op": "type",
+        "selector": "[data-webmcp-test-form] input[name=\"text\"]",
+        "input": "text"
+      }
+    ]
+  },
+  {
+    "name": "trigger_post",
+    "description": "Select the demo post button. This submits the prepared demo message.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "annotations": {
+      "destructiveHint": true
+    },
+    "steps": [
+      {
+        "op": "click",
+        "selector": "[data-webmcp-test-form] button[type=\"submit\"]"
+      }
+    ]
+  }
+]

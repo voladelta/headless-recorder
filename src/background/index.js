@@ -6,6 +6,25 @@ import { overlayActions } from '@/modules/overlay/constants'
 import { headlessActions } from '@/modules/code-generator/constants'
 
 import CodeGenerator from '@/modules/code-generator'
+import { customToolLimits, isHttpOrigin, parseToolDefinition } from '@/webmcp/tool-definition'
+
+const CUSTOM_TOOLS_STORAGE_KEY = 'webmcpCustomTools'
+const BRIDGE_ENABLED_STORAGE_KEY = 'webmcpBridgeEnabled'
+const BRIDGE_URL = 'ws://127.0.0.1:9321/extension'
+const BRIDGE_RECONNECT_MS = 2_000
+
+function isLoopbackOrigin(origin) {
+  try {
+    const url = new URL(origin)
+    return (
+      url.protocol === 'http:' &&
+      (url.hostname === '127.0.0.1' || url.hostname === 'localhost') &&
+      url.origin === origin
+    )
+  } catch {
+    return false
+  }
+}
 
 class Background {
   constructor() {
@@ -16,6 +35,10 @@ class Background {
     this._hasGoto = false
     this._hasViewPort = false
     this._queue = Promise.resolve()
+    this._definitionQueue = Promise.resolve()
+    this._bridgeEnabled = false
+    this._bridgeSocket = null
+    this._bridgeReconnectTimer = null
   }
 
   init() {
@@ -25,7 +48,48 @@ class Background {
       })
     })
 
-    chrome.runtime.onMessage.addListener((msg, sender) => {
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+      if (msg?.type?.startsWith('WEBMCP_BRIDGE_')) {
+        const request = this.handleBridgeControlMessage(msg)
+        request.then(
+          (value) => sendResponse({ ok: true, value }),
+          (error) =>
+            sendResponse({ ok: false, error: String(error?.message || error).slice(0, 500) }),
+        )
+        return true
+      }
+      if (msg?.type?.startsWith('WEBMCP_DEFINITION_')) {
+        const request = this._definitionQueue.then(() => this.handleDefinitionMessage(msg, sender))
+        this._definitionQueue = request.catch((error) => console.error(error))
+        request.then(
+          (value) => sendResponse({ ok: true, value }),
+          (error) =>
+            sendResponse({ ok: false, error: String(error?.message || error).slice(0, 500) }),
+        )
+        return true
+      }
+      if (msg?.type?.startsWith('WEBMCP_RUNTIME_')) {
+        const request = this._queue.then(() => this.handleRuntimeToolMessage(msg))
+        this._queue = request.catch((error) => console.error(error))
+        request.then(
+          (value) => sendResponse({ ok: true, value }),
+          (error) =>
+            sendResponse({ ok: false, error: String(error?.message || error).slice(0, 500) }),
+        )
+        return true
+      }
+      if (msg?.type?.startsWith('WEBMCP_POST_')) {
+        const request = this._queue
+          .then(() => this.restoreState())
+          .then(() => this.handlePostToolMessage(msg))
+        this._queue = request.catch((error) => console.error(error))
+        request.then(
+          (value) => sendResponse({ ok: true, value }),
+          (error) =>
+            sendResponse({ ok: false, error: String(error?.message || error).slice(0, 500) }),
+        )
+        return true
+      }
       this.enqueue(() => this.handleMessage(msg, sender))
     })
 
@@ -35,6 +99,11 @@ class Background {
 
     chrome.webNavigation.onBeforeNavigate.addListener(() => {
       this.enqueue(() => this.handleBeforeNavigate())
+    })
+
+    storage.get(BRIDGE_ENABLED_STORAGE_KEY).then(({ [BRIDGE_ENABLED_STORAGE_KEY]: enabled }) => {
+      this._bridgeEnabled = Boolean(enabled)
+      if (this._bridgeEnabled) this.openBridgeConnection()
     })
   }
 
@@ -309,6 +378,205 @@ class Background {
       }
       await this.unPause()
     }
+  }
+
+  async handlePostToolMessage(msg) {
+    const tab = await browser.getActiveTab()
+    if (!tab?.id || !tab.url) throw new Error('Open the local WebMCP demo page first.')
+    const origin = new URL(tab.url).origin
+    if (!isLoopbackOrigin(origin)) {
+      throw new Error('post_message can be injected only on localhost or 127.0.0.1.')
+    }
+    const frame = await chrome.webNavigation.getFrame({ tabId: tab.id, frameId: 0 })
+    if (!frame?.documentId || new URL(frame.url).origin !== origin) {
+      throw new Error('The exact demo document is not available.')
+    }
+    const target = { tabId: tab.id, frameId: 0, documentId: frame.documentId, origin }
+    await browser.injectContentScriptInto(tab.id, frame.documentId)
+    const response = await browser.sendTargetMessage(target, { type: msg.type })
+    if (!response?.ok) throw new Error(response?.error || 'The WebMCP page bridge failed.')
+    return response.value
+  }
+
+  async getActiveRuntimeTarget() {
+    const tab = await browser.getActiveTab()
+    if (!tab?.id || !tab.url) throw new Error('Open an HTTP or HTTPS page first.')
+    const origin = new URL(tab.url).origin
+    if (!isHttpOrigin(origin)) throw new Error('WebMCP tools require an HTTP or HTTPS page.')
+    const frame = await chrome.webNavigation.getFrame({ tabId: tab.id, frameId: 0 })
+    if (!frame?.documentId || new URL(frame.url).origin !== origin) {
+      throw new Error('The exact page document is not available.')
+    }
+    return { tabId: tab.id, frameId: 0, documentId: frame.documentId, origin }
+  }
+
+  async getCustomDefinitions(origin) {
+    const { [CUSTOM_TOOLS_STORAGE_KEY]: toolsByOrigin = {} } =
+      await storage.get(CUSTOM_TOOLS_STORAGE_KEY)
+    const definitions = toolsByOrigin[origin]
+    return Array.isArray(definitions) ? definitions.map(parseToolDefinition) : []
+  }
+
+  async handleRuntimeToolMessage(msg) {
+    const target = await this.getActiveRuntimeTarget()
+    await browser.injectContentScriptInto(target.tabId, target.documentId)
+    const definitions =
+      msg.type === 'WEBMCP_RUNTIME_ENABLE'
+        ? await this.getCustomDefinitions(target.origin)
+        : undefined
+    const response = await browser.sendTargetMessage(target, { ...msg, definitions })
+    if (!response?.ok) throw new Error(response?.error || 'The WebMCP runtime failed.')
+    return response.value
+  }
+
+  async handleDefinitionMessage(msg, sender) {
+    if (
+      sender?.frameId !== 0 ||
+      !sender.tab?.id ||
+      !sender.url ||
+      msg.origin !== new URL(sender.url).origin
+    ) {
+      throw new Error('The WebMCP definition sender is not an exact main-frame document.')
+    }
+    if (!isHttpOrigin(msg.origin))
+      throw new Error('WebMCP definitions require an HTTP or HTTPS origin.')
+
+    const { [CUSTOM_TOOLS_STORAGE_KEY]: stored = {} } = await storage.get(CUSTOM_TOOLS_STORAGE_KEY)
+    const toolsByOrigin = { ...stored }
+    const current = Array.isArray(toolsByOrigin[msg.origin])
+      ? toolsByOrigin[msg.origin].map(parseToolDefinition)
+      : []
+
+    if (msg.type === 'WEBMCP_DEFINITION_SAVE') {
+      const definition = parseToolDefinition(msg.definition)
+      const index = current.findIndex((item) => item.name === definition.name)
+      if (index === -1 && current.length >= customToolLimits.definitionsPerOrigin) {
+        throw new Error('This origin already has the maximum number of custom tools.')
+      }
+      if (index === -1) current.push(definition)
+      else current[index] = definition
+    } else if (msg.type === 'WEBMCP_DEFINITION_REMOVE') {
+      const index = current.findIndex((item) => item.name === msg.name)
+      if (index === -1) throw new Error(`Custom WebMCP tool not found: ${msg.name}`)
+      current.splice(index, 1)
+    } else {
+      throw new Error('Unknown WebMCP definition request.')
+    }
+
+    toolsByOrigin[msg.origin] = current
+    await storage.set({ [CUSTOM_TOOLS_STORAGE_KEY]: toolsByOrigin })
+    return current
+  }
+
+  bridgeStatus() {
+    return {
+      enabled: this._bridgeEnabled,
+      connected: this._bridgeSocket?.readyState === WebSocket.OPEN,
+      url: BRIDGE_URL,
+    }
+  }
+
+  async handleBridgeControlMessage(msg) {
+    if (msg.type === 'WEBMCP_BRIDGE_STATUS') return this.bridgeStatus()
+    if (msg.type === 'WEBMCP_BRIDGE_CONNECT') {
+      this._bridgeEnabled = true
+      await storage.set({ [BRIDGE_ENABLED_STORAGE_KEY]: true })
+      this.openBridgeConnection()
+      return this.bridgeStatus()
+    }
+    if (msg.type === 'WEBMCP_BRIDGE_DISCONNECT') {
+      this._bridgeEnabled = false
+      await storage.set({ [BRIDGE_ENABLED_STORAGE_KEY]: false })
+      clearTimeout(this._bridgeReconnectTimer)
+      this._bridgeReconnectTimer = null
+      this._bridgeSocket?.close(1000, 'Bridge disabled.')
+      this._bridgeSocket = null
+      return this.bridgeStatus()
+    }
+    throw new Error('Unknown WebMCP bridge request.')
+  }
+
+  openBridgeConnection() {
+    if (
+      !this._bridgeEnabled ||
+      this._bridgeSocket?.readyState === WebSocket.OPEN ||
+      this._bridgeSocket?.readyState === WebSocket.CONNECTING
+    ) {
+      return
+    }
+
+    const socket = new WebSocket(BRIDGE_URL)
+    this._bridgeSocket = socket
+    socket.addEventListener('message', (event) =>
+      this.handleBridgeSocketMessage(socket, event.data),
+    )
+    socket.addEventListener('close', () => {
+      if (this._bridgeSocket === socket) this._bridgeSocket = null
+      if (!this._bridgeEnabled) return
+      clearTimeout(this._bridgeReconnectTimer)
+      this._bridgeReconnectTimer = setTimeout(
+        () => this.openBridgeConnection(),
+        BRIDGE_RECONNECT_MS,
+      )
+    })
+  }
+
+  handleBridgeSocketMessage(socket, rawMessage) {
+    let message
+    try {
+      if (typeof rawMessage !== 'string' || rawMessage.length > 64 * 1024) return
+      message = JSON.parse(rawMessage)
+    } catch {
+      return
+    }
+    if (message?.kind !== 'request' || !Number.isInteger(message.id)) return
+
+    const request = this._queue.then(() => this.handleBridgeMethod(message.method, message.params))
+    this._queue = request.catch((error) => console.error(error))
+    request.then(
+      (value) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ kind: 'response', id: message.id, ok: true, value }))
+        }
+      },
+      (error) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(
+            JSON.stringify({
+              kind: 'response',
+              id: message.id,
+              ok: false,
+              error: String(error?.message || error).slice(0, 500),
+            }),
+          )
+        }
+      },
+    )
+  }
+
+  async handleBridgeMethod(method, params = {}) {
+    if (method === 'runtime_status') {
+      return this.handleRuntimeToolMessage({ type: 'WEBMCP_RUNTIME_STATUS' })
+    }
+    if (method === 'list_tools') {
+      await this.handleRuntimeToolMessage({ type: 'WEBMCP_RUNTIME_ENABLE' })
+      return this.handleRuntimeToolMessage({ type: 'WEBMCP_RUNTIME_LIST' })
+    }
+    if (method === 'call_tool') {
+      if (typeof params.name !== 'string' || params.name.length > 64) {
+        throw new Error('A valid WebMCP tool name is required.')
+      }
+      if (!params.input || typeof params.input !== 'object' || Array.isArray(params.input)) {
+        throw new Error('WebMCP tool input must be an object.')
+      }
+      await this.handleRuntimeToolMessage({ type: 'WEBMCP_RUNTIME_ENABLE' })
+      return this.handleRuntimeToolMessage({
+        type: 'WEBMCP_RUNTIME_CALL',
+        name: params.name,
+        input: params.input,
+      })
+    }
+    throw new Error(`Unknown extension bridge method: ${method}`)
   }
 
   async handleNavigation() {

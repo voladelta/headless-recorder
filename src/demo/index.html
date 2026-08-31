@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Headless Recorder WebMCP live demo</title>
+    <style>
+      body {
+        max-width: 42rem;
+        margin: 4rem auto;
+        padding: 0 1rem;
+        font-family: system-ui, sans-serif;
+      }
+      form {
+        display: flex;
+        gap: 0.5rem;
+        margin-block: 1rem;
+      }
+      input {
+        flex: 1;
+      }
+      [data-webmcp-post-target] {
+        min-height: 8rem;
+        border: 1px solid currentcolor;
+        border-radius: 0.5rem;
+        padding: 1rem;
+      }
+      [data-webmcp-post] {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>WebMCP post_message demo</h1>
+      <p>Inject <code>post_message</code> from Headless Recorder, then let Brave MCP call it.</p>
+      <form data-webmcp-test-form>
+        <input name="text" value="Hello from WebMCP" aria-label="Message" />
+        <button type="submit">Call through WebMCP</button>
+      </form>
+      <p data-webmcp-status role="status">Waiting for post_message.</p>
+      <section data-webmcp-post-target aria-live="polite" aria-label="Posted messages"></section>
+    </main>
+    <script>
+      document
+        .querySelector('[data-webmcp-test-form]')
+        .addEventListener('submit', async (event) => {
+          event.preventDefault()
+          const form = event.currentTarget
+          const status = document.querySelector('[data-webmcp-status]')
+          try {
+            const tools = await document.modelContext.getTools()
+            const tool = tools.find(
+              (item) => item.name === 'post_message' && item.window === window,
+            )
+            if (!tool) throw new Error('post_message is not registered yet.')
+            await document.modelContext.executeTool(
+              tool,
+              JSON.stringify({ text: new FormData(form).get('text') }),
+            )
+            status.textContent = 'post_message completed.'
+          } catch (error) {
+            status.textContent = error.message
+          }
+        })
+    </script>
+  </body>
+</html>

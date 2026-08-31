@@ -63,6 +63,9 @@
       </Transition>
     </main>
 
+    <WebMCPRuntimePanel v-if="!isRecording" />
+    <WebMCPPostPanel v-if="!isRecording" />
+
     <Footer v-if="!isRecording && !showResultsTab" />
 
     <dialog
@@ -102,6 +105,8 @@ import Recording from '@/views/Recording.vue'
 import Button from '@/components/Button.vue'
 import Footer from '@/components/Footer.vue'
 import Header from '@/components/Header.vue'
+import WebMCPPostPanel from '@/popup/WebMCPPostPanel.vue'
+import WebMCPRuntimePanel from '@/popup/WebMCPRuntimePanel.vue'
 
 let bus
 
@@ -121,6 +126,8 @@ export default {
     Header,
     Footer,
     Button,
+    WebMCPPostPanel,
+    WebMCPRuntimePanel,
   },
 
   data() {
@@ -348,13 +355,14 @@ export default {
 <style>
 html {
   width: 386px;
-  height: 535px;
+  min-height: 535px;
+  max-height: 600px;
 }
 
 .popup {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
   background: var(--color-bg-page);
 }
 

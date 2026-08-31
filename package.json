@@ -7,6 +7,8 @@
     "clean": "bun -e \"import { rm } from 'node:fs/promises'; await rm('dist', { recursive: true, force: true })\"",
     "dev": "bun run clean && vite build --mode development --watch",
     "serve": "bun run dev",
+    "webmcp:bridge": "bun src/bridge/server.js",
+    "webmcp:demo": "bun src/demo/server.js",
     "build": "bun run clean && vite build",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -18,12 +20,15 @@
   },
   "dependencies": {
     "@medv/finder": "4.0.2",
+    "@modelcontextprotocol/server": "2.0.0",
     "highlight.js": "11.12.0",
     "vue": "3.5.42",
     "vue-tippy": "6.7.1",
-    "vuex": "4.1.0"
+    "vuex": "4.1.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
     "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "7.0.1",
     "@vitejs/plugin-vue": "6.0.8",

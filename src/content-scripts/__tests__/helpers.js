@@ -32,7 +32,7 @@ export const startServer = function (buildDir, file) {
     const app = express()
     app.use('/build', express.static(path.join(__dirname, buildDir)))
     app.get('/', (req, res) => {
-      res.status(200).sendFile(file, { root: __dirname })
+      res.status(200).sendFile(file, path.isAbsolute(file) ? undefined : { root: __dirname })
     })
 
     const server = app.listen(0, '127.0.0.1')
