@@ -51,8 +51,8 @@
 </template>
 
 <script>
-import RoundButton from '@/components/RoundButton'
-import RecordingLabel from '@/components/RecordingLabel'
+import RoundButton from '@/components/RoundButton.vue'
+import RecordingLabel from '@/components/RecordingLabel.vue'
 
 export default {
   components: { RoundButton, RecordingLabel },

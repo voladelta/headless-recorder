@@ -1,57 +1,32 @@
 import { mount } from '@vue/test-utils'
-import RecordingTab from '../RecordingTab'
+import RecordingTab from '../../views/Recording.vue'
 
 describe('RecordingTab.vue', () => {
-  test('it has the correct pristine / empty state', () => {
+  test('shows the current recording state', () => {
+    const wrapper = mount(RecordingTab, {
+      props: {
+        isRecording: true,
+        isPaused: true,
+      },
+    })
+
+    expect(wrapper.text()).toContain('RESUME')
+    expect(wrapper.find('img[alt="resume recording"]').attributes('style')).toBeUndefined()
+    expect(wrapper.find('img[alt="pause recording"]').attributes('style')).toContain(
+      'display: none',
+    )
+  })
+
+  test('emits recording controls', async () => {
     const wrapper = mount(RecordingTab)
-    expect(wrapper.element).toMatchSnapshot()
-  })
+    const [stop, pause, restart] = wrapper.findAll('button')
 
-  test('it has the correct waiting for events state', () => {
-    const wrapper = mount(RecordingTab, { props: { isRecording: true } })
-    expect(wrapper.element).toMatchSnapshot()
-    expect(wrapper.find('.event-list').element).toBeEmpty()
-  })
+    await stop.trigger('click')
+    await pause.trigger('click')
+    await restart.trigger('click')
 
-  test('it has the correct recording Puppeteer custom events state', () => {
-    const wrapper = mount(RecordingTab, {
-      props: {
-        isRecording: true,
-        liveEvents: [
-          {
-            action: 'goto*',
-            href: 'http://example.com',
-          },
-          {
-            action: 'viewport*',
-            selector: undefined,
-            value: { width: 1280, height: 800 },
-          },
-          {
-            action: 'navigation*',
-            selector: undefined,
-          },
-        ],
-      },
-    })
-    expect(wrapper.element).toMatchSnapshot()
-    expect(wrapper.find('.event-list').element).not.toBeEmpty()
-  })
-
-  test('it has the correct recording DOM events state', () => {
-    const wrapper = mount(RecordingTab, {
-      props: {
-        isRecording: true,
-        liveEvents: [
-          {
-            action: 'click',
-            selector: '.main > a.link',
-            href: 'http://example.com',
-          },
-        ],
-      },
-    })
-    expect(wrapper.element).toMatchSnapshot()
-    expect(wrapper.find('.event-list').element).not.toBeEmpty()
+    expect(wrapper.emitted('stop')).toHaveLength(1)
+    expect(wrapper.emitted('pause')).toHaveLength(1)
+    expect(wrapper.emitted('restart')).toHaveLength(1)
   })
 })

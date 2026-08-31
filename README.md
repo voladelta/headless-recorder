@@ -1,4 +1,5 @@
 # 🚨 Deprecated!
+
 As of Dec 16th 2022, Headless Recorder is fully deprecated. No new changes, support, maintenance or new features are expected to land.
 
 For more information and possible alternatives refer to this [issue](https://github.com/checkly/headless-recorder/issues/232).
@@ -20,9 +21,7 @@ For more information and possible alternatives refer to this [issue](https://git
   <img src="https://img.shields.io/chrome-web-store/v/djeegiggegleadkkbgopoonhjimgehda?label=Chrome%20Webstore" alt="Chrome Webstore Version" />
 </p>
 
-
 > 🎥 Headless recorder is a Chrome extension that records your browser interactions and generates a Playwright/Puppeteer script.
-
 
 <br>
 <p align="center">
@@ -55,14 +54,15 @@ This project builds on existing open source projects (see [Credits](#-credits)) 
 - Allows `data-id` configuration for element selection.
 
 #### Recorded Events
-  - `click`
-  - `dblclick`
-  - `change`
-  - `keydown`
-  - `select`
-  - `submit`
-  - `load`
-  - `unload`
+
+- `click`
+- `dblclick`
+- `change`
+- `keydown`
+- `select`
+- `submit`
+- `load`
+- `unload`
 
 > This collection will be expanded in future releases. 💪
 
@@ -75,8 +75,8 @@ This project builds on existing open source projects (see [Credits](#-credits)) 
 3. Click on links, inputs and other elements.
 4. Wait for full page load on each navigation.
 
-    **The icon will switch from <img width="24px" height="24px" src="./assets/rec.png" alt="recording icon"/>
-    to <img width="24px" height="24px" src="./assets/wait.png" alt="waiting icon"/> to indicate it is ready for more input from you.**
+   **The icon will switch from <img width="24px" height="24px" src="./assets/rec.png" alt="recording icon"/>
+   to <img width="24px" height="24px" src="./assets/wait.png" alt="waiting icon"/> to indicate it is ready for more input from you.**
 
 5. Click Pause when you want to navigate without recording anything. Hit Resume to continue recording.
 
@@ -90,19 +90,27 @@ This project builds on existing open source projects (see [Credits](#-credits)) 
 
 ## Run Locally
 
-After cloning the project, open the terminal and navigate to project root directory.
+Install [Bun](https://bun.com/) 1.4 or later. Then run these commands from the project root:
 
 ```bash
-$ npm i # install dependencies
-
-$ npm run serve # run development mode
-
-$ npm run test # run test cases
-
-$ npm run lint # run and fix linter issues
-
-$ npm run build # build and zip for production
+bun install
+bun run dev
 ```
+
+The development command rebuilds the extension in `dist` when a source file changes. Load that
+directory as an unpacked extension in Chrome.
+
+Use the following commands for validation:
+
+```bash
+bun run format:check
+bun run lint
+bun run test
+bun run build
+bun run check
+```
+
+`bun run check` runs the formatter check, Oxlint, Vitest, and the Vite production build.
 
 <br>
 
@@ -118,7 +126,7 @@ $ npm run build # build and zip for production
 
 ## Release
 
-1. Bump version using `npm version` (patch, minor, major).
+1. Update the version in `package.json` and `src/manifest.json`.
 2. Push changes with tags `git push --tags`
 3. Generate a release using **gren**: `gren release --override --data-source=milestones --milestone-match="{{tag_name}}"`
 
@@ -136,7 +144,6 @@ Headless recorder is the spiritual successor & love child of segment.io's [Daydr
 
 [MIT](https://github.com/checkly/headless-recorder/blob/main/LICENSE)
 
-
 <p align="center">
   <a href="https://checklyhq.com?utm_source=github&utm_medium=sponsor-logo-github&utm_campaign=headless-recorder" target="_blank">
   <img width="100px" src="./assets/checkly-logo.png?raw=true" alt="Checkly" />
@@ -146,4 +153,3 @@ Headless recorder is the spiritual successor & love child of segment.io's [Daydr
   <br>
   <b><sub>From Checkly with ♥️</sub></b>
 <p>
-

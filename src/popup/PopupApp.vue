@@ -126,7 +126,9 @@ export default {
       if (this.isRecording) {
         this.stop()
       } else {
-        close && window.close()
+        if (close) {
+          window.close()
+        }
         this.start()
       }
 

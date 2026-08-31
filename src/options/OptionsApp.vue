@@ -15,9 +15,7 @@
     <div class="flex flex-col w-1/2">
       <header class="flex flex-row justify-between items-center mb-3.5">
         <div class="flex items-baseline">
-          <h1 class="text-blue text-2xl font-bold mr-1">
-            Headless Recorder
-          </h1>
+          <h1 class="text-blue text-2xl font-bold mr-1">Headless Recorder</h1>
           <span class="text-gray-dark dark:text-gray-light text-sm">v{{ version }}</span>
         </div>
         <span
@@ -71,9 +69,7 @@
 
       <section>
         <h2>Generator</h2>
-        <Toggle v-model="options.code.wrapAsync">
-          Wrap code in async function
-        </Toggle>
+        <Toggle v-model="options.code.wrapAsync"> Wrap code in async function </Toggle>
         <Toggle v-model="options.code.headless">
           Set <code>headless</code> in playwright/puppeteer launch options
         </Toggle>
@@ -87,9 +83,7 @@
         <Toggle v-model="options.code.blankLinesBetweenBlocks">
           Add blank lines between code blocks
         </Toggle>
-        <Toggle v-model="options.code.showPlaywrightFirst">
-          Show Playwright tab first
-        </Toggle>
+        <Toggle v-model="options.code.showPlaywrightFirst"> Show Playwright tab first </Toggle>
       </section>
 
       <section>
@@ -97,9 +91,7 @@
         <Toggle v-model="options.extension.darkMode">
           Use Dark Mode {{ options.extension.darkMode }}
         </Toggle>
-        <Toggle v-model="options.extension.telemetry">
-          Allow recording of usage telemetry
-        </Toggle>
+        <Toggle v-model="options.extension.telemetry"> Allow recording of usage telemetry </Toggle>
         <p>
           We only record clicks for basic product development, no website content or input data.
           Data is never, ever shared with 3rd parties.
@@ -115,18 +107,17 @@ import { version } from '../../package.json'
 import storage from '@/services/storage'
 import { isDarkMode } from '@/services/constants'
 import { defaults as code } from '@/modules/code-generator/base-generator'
-import { merge } from 'lodash'
 
-import Button from '@/components/Button'
-import Toggle from '@/components/Toggle'
+import Button from '@/components/Button.vue'
+import Toggle from '@/components/Toggle.vue'
 
-const defaultOptions = {
-  code,
+const createDefaultOptions = () => ({
+  code: { ...code },
   extension: {
     telemetry: true,
     darkMode: isDarkMode(),
   },
-}
+})
 
 export default {
   name: 'OptionsApp',
@@ -137,7 +128,7 @@ export default {
       version,
       loading: true,
       saving: false,
-      options: defaultOptions,
+      options: createDefaultOptions(),
       recordingKeyCodePress: false,
     }
   },
@@ -176,9 +167,12 @@ export default {
     },
 
     async load() {
-      const { options } = await storage.get('options')
-      merge(defaultOptions, options)
-      this.options = Object.assign({}, this.options, defaultOptions)
+      const { options = {} } = await storage.get('options')
+      const defaults = createDefaultOptions()
+      this.options = {
+        code: { ...defaults.code, ...options.code },
+        extension: { ...defaults.extension, ...options.extension },
+      }
 
       this.loading = false
     },
@@ -186,7 +180,7 @@ export default {
     listenForKeyCodePress() {
       this.recordingKeyCodePress = true
 
-      const keyDownFunction = e => {
+      const keyDownFunction = (e) => {
         this.recordingKeyCodePress = false
         this.updateKeyCodeWithNumber(e)
         window.removeEventListener('keydown', keyDownFunction, false)
@@ -205,6 +199,8 @@ export default {
 </script>
 
 <style scoped>
+@reference '../assets/tailwind.css';
+
 body {
   background: #f9fafc;
   height: 100vh;

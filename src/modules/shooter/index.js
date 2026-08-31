@@ -1,14 +1,13 @@
-import EventEmitter from 'events'
 import getSelector from '@/services/selector'
 import { overlayActions, overlaySelectors } from '@/modules/overlay/constants'
 
 const BORDER_THICKNESS = 2
-class Shooter extends EventEmitter {
-  constructor({ isClipped = false, store } = {}) {
-    super()
 
+class Shooter {
+  constructor({ isClipped = false, store } = {}) {
     this.store = store
     this.isClipped = isClipped
+    this.listeners = new Map()
 
     this._overlay = null
     this._selector = null
@@ -22,10 +21,18 @@ class Shooter extends EventEmitter {
     this._boundedKeyUp = this.keyup.bind(this)
   }
 
+  on(event, listener) {
+    this.listeners.set(event, listener)
+  }
+
+  emit(event, payload) {
+    this.listeners.get(event)?.(payload)
+  }
+
   mouseover(e) {
     this.currentSelctor = getSelector(e, { dataAttribute: this.store.state.dataAttribute }).replace(
       '.' + overlaySelectors.CURSOR_CAMERA_CLASS,
-      'body'
+      'body',
     )
   }
 

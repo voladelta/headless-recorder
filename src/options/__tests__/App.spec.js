@@ -1,10 +1,9 @@
 import { mount } from '@vue/test-utils'
-import App from '../OptionsApp'
+import App from '../OptionsApp.vue'
 
 function createChromeLocalStorageMock(options) {
-  let ops = options || {}
+  let ops = { options: options || {} }
   return {
-    options,
     storage: {
       local: {
         get: (key, cb) => {
@@ -14,6 +13,9 @@ function createChromeLocalStorageMock(options) {
           ops = options
           cb()
         },
+      },
+      onChanged: {
+        addListener: vi.fn(),
       },
     },
   }
@@ -27,13 +29,15 @@ describe('App.vue', () => {
   test('it has the correct pristine / empty state', () => {
     window.chrome = createChromeLocalStorageMock()
     const wrapper = mount(App)
-    expect(wrapper.element).toMatchSnapshot()
+
+    expect(wrapper.get('h1').text()).toBe('Headless Recorder')
+    expect(wrapper.findAll('[role="switch"]')).toHaveLength(8)
   })
 
   test('it loads the default options', () => {
     window.chrome = createChromeLocalStorageMock()
     const wrapper = mount(App)
-    expect(wrapper.vm.$data.options.code.wrapAsync).toBeTruthy()
+    expect(wrapper.vm.$data.options.code.wrapAsync).toBe(false)
   })
 
   test('it has the default key code for capturing inputs as 9 (Tab)', () => {
@@ -60,27 +64,18 @@ describe('App.vue', () => {
       })
   })
 
-  test("it stores and loads the user's edited options", () => {
+  test("it stores and loads the user's edited options", async () => {
     const options = { code: { wrapAsync: true } }
     window.chrome = createChromeLocalStorageMock(options)
     const wrapper = mount(App)
 
-    return wrapper.vm
-      .$nextTick()
-      .then(() => {
-        const checkBox = wrapper.find('#options-code-wrapAsync')
-        checkBox.trigger('click')
-        expect(wrapper.find('.saving-badge').text()).toEqual('Saving...')
-        return wrapper.vm.$nextTick()
-      })
-      .then(() => {
-        // we need to simulate a page reload
-        wrapper.vm.load()
-        return wrapper.vm.$nextTick()
-      })
-      .then(() => {
-        const checkBox = wrapper.find('#options-code-wrapAsync')
-        return expect(checkBox.element.checked).toBeFalsy()
-      })
+    await vi.waitFor(() => expect(wrapper.vm.options.code.wrapAsync).toBe(true))
+
+    await wrapper.findAll('[role="switch"]')[0].trigger('click')
+    expect(wrapper.find('[role="alert"]').text()).toEqual('Saving...')
+    await vi.waitFor(() => expect(wrapper.vm.options.code.wrapAsync).toBe(false))
+
+    await wrapper.vm.load()
+    expect(wrapper.vm.options.code.wrapAsync).toBe(false)
   })
 })

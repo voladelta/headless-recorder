@@ -1,14 +1,17 @@
 import { shallowMount } from '@vue/test-utils'
-import App from '../PopupApp'
+import App from '../PopupApp.vue'
 
 const chrome = {
   storage: {
     local: {
-      get: jest.fn(),
+      get: vi.fn((keys, callback) => callback({})),
     },
   },
-  extension: {
-    connect: jest.fn(),
+  runtime: {
+    connect: vi.fn(() => ({ postMessage: vi.fn() })),
+  },
+  cookies: {
+    getAll: vi.fn(() => Promise.resolve([])),
   },
 }
 
@@ -16,6 +19,9 @@ describe('App.vue', () => {
   test('it has the correct pristine / empty state', () => {
     window.chrome = chrome
     const wrapper = shallowMount(App)
-    expect(wrapper.element).toMatchSnapshot()
+
+    expect(wrapper.find('header-stub').exists()).toBe(true)
+    expect(wrapper.find('home-stub').exists()).toBe(true)
+    expect(wrapper.find('footer-stub').exists()).toBe(true)
   })
 })

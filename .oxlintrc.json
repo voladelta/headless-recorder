@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true,
+    "webextensions": true
+  },
+  "ignorePatterns": ["dist", "src/**/__snapshots__/**"],
+  "plugins": ["vue"],
+  "rules": {
+    "no-debugger": "warn",
+    "vue/no-reserved-component-names": "off"
+  }
+}

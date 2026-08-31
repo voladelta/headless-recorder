@@ -1,33 +1,38 @@
 import { mount } from '@vue/test-utils'
-import VueHighlightJS from 'vue3-highlightjs'
 
-import ResultsTab from '../ResultsTab'
+import ResultsTab from '../../views/Results.vue'
 
-describe('RecordingTab.vue', () => {
-  test('it has the correct pristine / empty state', () => {
+describe('ResultsTab.vue', () => {
+  test('shows its empty state', () => {
     const wrapper = mount(ResultsTab)
-    expect(wrapper.element).toMatchSnapshot()
+
+    expect(wrapper.text()).toContain('No code yet...')
     expect(wrapper.find('code.javascript').exists()).toBe(false)
   })
 
-  test('it show a code box when there is code', () => {
+  test('highlights generated code', async () => {
     const wrapper = mount(ResultsTab, {
-      global: {
-        plugins: [VueHighlightJS],
-      },
       props: { puppeteer: `await page.click('.class')` },
     })
-    expect(wrapper.element).toMatchSnapshot()
+    await wrapper.vm.$nextTick()
+
     expect(wrapper.find('code.javascript').exists()).toBe(true)
+    expect(wrapper.find('code.javascript').classes()).toContain('hljs')
   })
 
-  test('it render tabs for puppeteer & playwright', () => {
+  test('renders tabs for Puppeteer and Playwright', async () => {
     const wrapper = mount(ResultsTab)
-    expect(wrapper.findAll('.tabs__action').length).toEqual(2)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('button')).toHaveLength(2)
+    expect(wrapper.findAll('button').map((button) => button.text())).toEqual([
+      'puppeteer',
+      'playwright',
+    ])
   })
 
-  test('it render playwright first when option is present', async () => {
-    const wrapper = await mount(ResultsTab, {
+  test('renders Playwright first when configured', () => {
+    const wrapper = mount(ResultsTab, {
       props: {
         options: {
           code: {
@@ -36,6 +41,7 @@ describe('RecordingTab.vue', () => {
         },
       },
     })
-    expect(wrapper.find('.tabs__action').text()).toEqual('🎭playwright')
+
+    expect(wrapper.find('button').text()).toEqual('playwright')
   })
 })

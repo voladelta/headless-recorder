@@ -52,7 +52,11 @@ export default class HeadlessController {
         break
 
       case overlayActions.TOGGLE_OVERLAY:
-        msg?.value?.open ? this.overlay.mount(msg.value) : this.overlay.unmount()
+        if (msg?.value?.open) {
+          this.overlay.mount(msg.value)
+        } else {
+          this.overlay.unmount()
+        }
         break
 
       case popupActions.STOP:
@@ -80,9 +84,11 @@ export default class HeadlessController {
 
     this.shooter.addCameraIcon()
 
-    this.store.state.screenshotMode
-      ? this.shooter.startScreenshotMode()
-      : this.shooter.stopScreenshotMode()
+    if (this.store.state.screenshotMode) {
+      this.shooter.startScreenshotMode()
+    } else {
+      this.shooter.stopScreenshotMode()
+    }
 
     this.shooter.on('click', ({ selector }) => {
       this.store.commit('stopScreenshotMode')

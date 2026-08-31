@@ -3,13 +3,15 @@ import { isDarkMode } from '../constants'
 function setMatchMediaMock(matches) {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
-    value: jest.fn(() => ({ matches })),
+    value: vi.fn(() => ({ matches })),
   })
 }
 
 describe('isDarkMode()', () => {
   beforeEach(() => {
-    window?.matchMedia?.mockClear()
+    if (vi.isMockFunction(window.matchMedia)) {
+      window.matchMedia.mockClear()
+    }
   })
 
   it('has darkMode enabled', () => {

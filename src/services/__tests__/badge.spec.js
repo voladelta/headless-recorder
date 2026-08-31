@@ -1,10 +1,10 @@
 import badge from '../badge'
 
 global.chrome = {
-  browserAction: {
-    setIcon: jest.fn(),
-    setBadgeText: jest.fn(text => (inputText.data = text)),
-    setBadgeBackgroundColor: jest.fn(),
+  action: {
+    setIcon: vi.fn(),
+    setBadgeText: vi.fn((text) => (inputText.data = text)),
+    setBadgeBackgroundColor: vi.fn(),
   },
 }
 
@@ -13,21 +13,21 @@ const inputText = {
 }
 
 beforeEach(() => {
-  chrome.browserAction.setIcon.mockClear()
-  chrome.browserAction.setBadgeBackgroundColor.mockClear()
+  chrome.action.setIcon.mockClear()
+  chrome.action.setBadgeBackgroundColor.mockClear()
 })
 
 describe('start', () => {
   it('sets recording icon', () => {
     badge.start()
-    expect(chrome.browserAction.setIcon.mock.calls.length).toBe(1)
+    expect(chrome.action.setIcon.mock.calls.length).toBe(1)
   })
 })
 
 describe('pause', () => {
   it('sets pause icon', () => {
     badge.pause()
-    expect(chrome.browserAction.setIcon.mock.calls.length).toBe(1)
+    expect(chrome.action.setIcon.mock.calls.length).toBe(1)
   })
 })
 
@@ -50,7 +50,7 @@ describe('wait', () => {
   it('changes text to wait', () => {
     badge.wait()
     badge.setText('wait')
-    expect(chrome.browserAction.setBadgeBackgroundColor.mock.calls.length).toBe(1)
+    expect(chrome.action.setBadgeBackgroundColor.mock.calls.length).toBe(1)
     expect(inputText.data.text).toBe('wait')
   })
 })
@@ -58,8 +58,8 @@ describe('wait', () => {
 describe('stop', () => {
   it('stops recording and sets result text', () => {
     badge.stop('data')
-    expect(chrome.browserAction.setIcon.mock.calls.length).toBe(1)
-    expect(chrome.browserAction.setBadgeBackgroundColor.mock.calls.length).toBe(1)
+    expect(chrome.action.setIcon.mock.calls.length).toBe(1)
+    expect(chrome.action.setBadgeBackgroundColor.mock.calls.length).toBe(1)
     expect(inputText.data.text).toBe('data')
   })
 })

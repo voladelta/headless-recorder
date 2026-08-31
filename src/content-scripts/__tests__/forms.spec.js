@@ -1,7 +1,6 @@
 import puppeteer from 'puppeteer'
-import _ from 'lodash'
 import { launchPuppeteerWithExtension } from '@/__tests__/helpers'
-import { waitForAndGetEvents, cleanEventLog, startServer } from './helpers'
+import { waitForAndGetEvents, cleanEventLog, getEventLog, startServer } from './helpers'
 
 let server
 let port
@@ -9,7 +8,7 @@ let browser
 let page
 
 describe('forms', () => {
-  beforeAll(async done => {
+  beforeAll(async () => {
     const buildDir = '../../../dist'
     const fixture = './fixtures/forms.html'
     {
@@ -17,12 +16,11 @@ describe('forms', () => {
       server = _s
       port = _p
     }
-    return done()
   }, 20000)
 
-  afterAll(done => {
-    server.close(() => {
-      return done()
+  afterAll(async () => {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()))
     })
   })
 
@@ -34,11 +32,19 @@ describe('forms', () => {
   })
 
   afterEach(async () => {
-    browser.close()
+    await browser.close()
   })
 
-  const tab = 1
   const change = 1
+
+  async function getInputEvents() {
+    await page.waitForFunction(() =>
+      window.headlessRecorder.recorder
+        ._getEventLog()
+        .some((event) => event.action === 'keydown' && event.keyCode === 9),
+    )
+    return getEventLog(page)
+  }
   test('it should load the form', async () => {
     const form = await page.$('form')
     expect(form).toBeTruthy()
@@ -49,8 +55,8 @@ describe('forms', () => {
     await page.type('input[type="text"]', string)
     await page.keyboard.press('Tab')
 
-    const eventLog = await waitForAndGetEvents(page, string.length + tab + change)
-    const event = _.find(eventLog, e => {
+    const eventLog = await getInputEvents()
+    const event = eventLog.find((e) => {
       return e.action === 'keydown' && e.keyCode === 9
     })
     expect(event.value).toEqual(string)
@@ -61,8 +67,8 @@ describe('forms', () => {
     await page.type('textarea', string)
     await page.keyboard.press('Tab')
 
-    const eventLog = await waitForAndGetEvents(page, string.length + tab + change)
-    const event = _.find(eventLog, e => {
+    const eventLog = await getInputEvents()
+    const event = eventLog.find((e) => {
       return e.action === 'keydown' && e.keyCode === 9
     })
     expect(event.value).toEqual(string)
