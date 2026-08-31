@@ -36,10 +36,6 @@
         <span v-show="!isCopying">Copy to clipboard</span>
         <span v-show="isCopying">Copied!</span>
       </Button>
-      <Button @click="run" v-show="code">
-        <img src="/icons/light/zap.svg" class="mr-1" alt="thunder" />
-        Run on Checkly
-      </Button>
     </div>
 
     <Footer v-if="!isRecording && !showResultsTab" />
@@ -84,7 +80,6 @@ export default {
 
   data() {
     return {
-      isLoggedIn: false,
       showResultsTab: false,
       isRecording: false,
       isPaused: false,
@@ -109,7 +104,6 @@ export default {
   async mounted() {
     this.loadState()
     bus = browser.getBackgroundBus()
-    this.isLoggedIn = await browser.getChecklyCookie()
   },
 
   methods: {
@@ -246,13 +240,6 @@ export default {
 
     getCode() {
       return this.code
-    },
-
-    run() {
-      browser.openChecklyRunner({
-        code: this.getCode(),
-        isLoggedIn: this.isLoggedIn,
-      })
     },
   },
 }

@@ -8,12 +8,15 @@ describe('install', () => {
       timeout: 10000,
     })
 
-    expect(await worker.evaluate(() => chrome.runtime.getManifest().manifest_version)).toBe(3)
+    const manifest = await worker.evaluate(() => chrome.runtime.getManifest())
+    expect(manifest.manifest_version).toBe(3)
+    expect(manifest.permissions).not.toContain('cookies')
 
     const extensionId = new URL(worker.url()).host
     const popup = await context.newPage()
     await popup.goto(`chrome-extension://${extensionId}/popup.html`)
     await popup.locator('#app > div').waitFor()
+    expect(await popup.getByText('Run on Checkly').count()).toBe(0)
 
     const lightBackground = await popup.locator('#app > div').evaluate((element) => {
       document.body.classList.remove('dark')

@@ -10,9 +10,6 @@ const chrome = {
   runtime: {
     connect: vi.fn(() => ({ postMessage: vi.fn() })),
   },
-  cookies: {
-    getAll: vi.fn(() => Promise.resolve([])),
-  },
 }
 
 describe('App.vue', () => {

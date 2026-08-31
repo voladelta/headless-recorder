@@ -6,12 +6,6 @@ const copyText = {
   data: '',
 }
 
-const cookies = [
-  {
-    name: 'checkly',
-  },
-]
-
 window.chrome = {
   tabs: {
     create: vi.fn(),
@@ -25,9 +19,6 @@ window.chrome = {
   runtime: {
     connect: vi.fn(),
     openOptionsPage: vi.fn(),
-  },
-  cookies: {
-    getAll: vi.fn(() => Promise.resolve(cookies)),
   },
 }
 
@@ -83,27 +74,6 @@ describe('injectContentScript', () => {
   })
 })
 
-describe('getChecklyCookie', () => {
-  it('returns checkly cookie', async () => {
-    await browser.getChecklyCookie()
-    expect(window.chrome.cookies.getAll.mock.calls.length).toBe(1)
-  })
-})
-
-describe('openChecklyRunner', () => {
-  it('is not logged in', () => {
-    browser.openChecklyRunner({ code: 'test code', isLoggedIn: false })
-    expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
-  })
-
-  it('is logged in', () => {
-    browser.openChecklyRunner({ code: 'test code', isLoggedIn: true })
-    expect(window.chrome.tabs.create).toHaveBeenCalledWith({
-      url: expect.stringContaining('?framework=playwright&script='),
-    })
-  })
-})
-
 describe('getBackgroundBus', () => {
   it('gets background bus', () => {
     browser.getBackgroundBus()
@@ -121,6 +91,8 @@ describe('openOptionsPage', () => {
 describe('openHelpPage', () => {
   it('calls function that creates new tab and opens help page', async () => {
     browser.openHelpPage()
-    expect(window.chrome.tabs.create.mock.calls.length).toBe(1)
+    expect(window.chrome.tabs.create).toHaveBeenCalledWith({
+      url: 'https://github.com/voladelta/headless-recorder#readme',
+    })
   })
 })

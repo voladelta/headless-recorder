@@ -1,8 +1,5 @@
 <template>
-  <div class="flex px-4 py-3 justify-between items-center mt-3">
-    <a href="https://checklyhq.com" target="_blank">
-      <img src="/images/checkly-logo.svg" alt="Checkly logo" class="w-24" />
-    </a>
+  <div class="flex px-4 py-3 justify-end items-center mt-3">
     <span class="text-gray-darkish">Version {{ version }}</span>
   </div>
 </template>
@@ -12,7 +9,7 @@ import { ref } from 'vue'
 import { version } from '../../package.json'
 
 export default {
-  name: 'ChecklyBadge',
+  name: 'Footer',
 
   setup() {
     return {

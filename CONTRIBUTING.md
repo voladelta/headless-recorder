@@ -1,8 +1,7 @@
 # Contributing
 
 Thank you for your interest in Headless Recorder. We welcome patches and contributions. The
-project records browser interactions and generates Playwright tests for the Checkly API and
-browser monitoring service.
+project records browser interactions and generates Playwright tests.
 
 ## New feature guidelines
 
@@ -17,7 +16,7 @@ When authoring new features or extending existing ones, consider the following:
 1. Clone this repository
 
 ```bash
-git clone https://github.com/checkly/headless-recorder
+git clone https://github.com/voladelta/headless-recorder
 cd headless-recorder
 ```
 

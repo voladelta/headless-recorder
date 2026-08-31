@@ -1,15 +1,10 @@
 <template>
   <main class="bg-gray-lightest flex py-9 w-full h-screen overflow-auto dark:bg-black">
     <div class="flex flex-col w-1/4 pt-12 pr-6">
-      <a href="https://www.checklyhq.com/docs/headless-recorder/" target="_blank">Docs</a>
-      <a href="https://github.com/checkly/headless-recorder" target="_blank">GitHub</a>
-      <a href="https://github.com/checkly/headless-recorder/blob/main/CHANGELOG.md"
+      <a href="https://github.com/voladelta/headless-recorder#readme" target="_blank">Docs</a>
+      <a href="https://github.com/voladelta/headless-recorder" target="_blank">GitHub</a>
+      <a href="https://github.com/voladelta/headless-recorder/blob/main/CHANGELOG.md"
         >Release notes</a
-      >
-      <a
-        href="https://chrome.google.com/webstore/detail/headless-recorder/djeegiggegleadkkbgopoonhjimgehda"
-        target="_blank"
-        >Chrome Web Store</a
       >
     </div>
     <div class="flex flex-col w-1/2">
